@@ -9,7 +9,7 @@ User = get_user_model()
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('phone_number', 'address', 'company_name')
+        fields = ('phone_number', 'address')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -28,16 +28,14 @@ class RegisterSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(required=True)
     phone_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
     address = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    company_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'role', 'first_name', 'last_name', 'phone_number', 'address', 'company_name')
+        fields = ('email', 'password', 'role', 'first_name', 'last_name', 'phone_number', 'address')
 
     def create(self, validated_data):
         phone_number = validated_data.pop('phone_number', '')
         address = validated_data.pop('address', '')
-        company_name = validated_data.pop('company_name', '')
 
         user = User.objects.create_user(
             email=validated_data['email'],
@@ -51,8 +49,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         UserProfile.objects.create(
             user=user,
             phone_number=phone_number,
-            address=address,
-            company_name=company_name
+            address=address
         )
         return user
 

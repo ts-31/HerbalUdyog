@@ -6,13 +6,6 @@ class IsAdminUserOrReadOnly(permissions.IsAdminUser):
         return request.method in permissions.SAFE_METHODS or is_admin
 
 
-class IsFarmer(permissions.BasePermission):
-    """
-    Allows access only to farmer users.
-    """
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == 'farmer')
-
 
 class IsCustomer(permissions.BasePermission):
     """

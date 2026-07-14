@@ -38,7 +38,6 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractUser):
     class Role(models.TextChoices):
         ADMIN = 'admin', _('Admin')
-        FARMER = 'farmer', _('Farmer')
         CUSTOMER = 'customer', _('Customer')
 
     username = None
@@ -62,9 +61,6 @@ class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
     phone_number = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
-    
-    # Example role-specific fields (could be split into FarmerProfile/CustomerProfile if complex)
-    company_name = models.CharField(max_length=255, blank=True, help_text=_("Applicable for farmers"))
 
     def __str__(self):
         return f"{self.user.email}'s Profile"
