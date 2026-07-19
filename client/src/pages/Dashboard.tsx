@@ -1,13 +1,119 @@
-import React, { useState } from 'react';
-import { User, Package, Heart, Settings, LogOut } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Package, Heart, Settings, LogOut, Star, ExternalLink, MessageSquare } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
+import { useWishlist } from '../hooks/useWishlist';
+import { useOrders } from '../hooks/useOrders';
+import { coreApi } from '../api/core';
+
+// ─── Testimonial Submission Component ────────────────────────────────────────
+
+const TestimonialTab = () => {
+  const { user } = useAuth();
+  const [form, setForm] = useState({ name: '', role: '', content: '', rating: 5 });
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setForm(prev => ({
+        ...prev,
+        name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email.split('@')[0],
+      }));
+    }
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSubmitting(true);
+      setError(null);
+      await coreApi.submitTestimonial(form);
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit testimonial');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 bg-[#ccebc7] text-[#154212] rounded-full flex items-center justify-center mx-auto mb-6">
+          <Star className="w-7 h-7 fill-current" />
+        </div>
+        <h3 className="font-headline-md text-2xl text-[#1b1d0e] mb-3">Thank you for your feedback!</h3>
+        <p className="font-body-md text-outline-variant">Your testimonial has been submitted and is pending review. It will appear on our homepage once approved.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="font-headline-lg text-2xl text-[#1b1d0e] mb-2">Share Your Experience</h2>
+      <p className="font-body-md text-outline-variant mb-8">Your feedback helps others make informed wellness choices. Approved testimonials appear on our homepage.</p>
+      {error && <div className="mb-4 p-3 bg-error/10 text-error rounded-xl text-sm">{error}</div>}
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block font-label-md mb-2">Your Name</label>
+            <input required type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})}
+              className="w-full px-4 py-2.5 border border-outline-variant/50 rounded-xl bg-surface focus:ring-2 focus:ring-primary outline-none font-body-md" />
+          </div>
+          <div>
+            <label className="block font-label-md mb-2">Role / Location (optional)</label>
+            <input type="text" placeholder="e.g. Wellness Enthusiast, Mumbai" value={form.role} onChange={e => setForm({...form, role: e.target.value})}
+              className="w-full px-4 py-2.5 border border-outline-variant/50 rounded-xl bg-surface focus:ring-2 focus:ring-primary outline-none font-body-md" />
+          </div>
+        </div>
+        <div>
+          <label className="block font-label-md mb-2">Rating</label>
+          <div className="flex gap-1">
+            {[1,2,3,4,5].map(star => (
+              <button type="button" key={star}
+                onMouseEnter={() => setHoveredRating(star)}
+                onMouseLeave={() => setHoveredRating(0)}
+                onClick={() => setForm({...form, rating: star})}
+                className="p-1">
+                <Star className={`w-6 h-6 ${star <= (hoveredRating || form.rating) ? 'fill-[#154212] text-[#154212]' : 'text-outline-variant/30'} transition-colors`} />
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="block font-label-md mb-2">Your Testimonial</label>
+          <textarea required rows={5} value={form.content} onChange={e => setForm({...form, content: e.target.value})}
+            placeholder="Tell us about your experience with our products and brand..."
+            className="w-full px-4 py-3 border border-outline-variant/50 rounded-xl bg-surface focus:ring-2 focus:ring-primary outline-none font-body-md resize-none" />
+        </div>
+        <button type="submit" disabled={submitting}
+          className="px-8 py-3 bg-[#154212] text-white rounded-xl font-label-md hover:bg-[#2d5a27] transition-colors disabled:opacity-70">
+          {submitting ? 'Submitting...' : 'Submit Testimonial'}
+        </button>
+      </form>
+    </div>
+  );
+};
 
 export const Dashboard = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const { profile, loading, updateProfile } = useProfile();
+  const { items: wishlistItems, loading: wishlistLoading, toggleWishlist } = useWishlist();
+  const { orders, loading: ordersLoading } = useOrders();
   
   const [activeTab, setActiveTab] = useState('profile');
+
+  useEffect(() => {
+    if (location.state && location.state.tab) {
+      setActiveTab(location.state.tab);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     first_name: '',
@@ -65,43 +171,30 @@ export const Dashboard = () => {
                 <div className="w-16 h-16 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-md text-2xl">
                   {profile?.first_name?.[0] || user?.email[0].toUpperCase()}
                 </div>
-                <div>
-                  <h3 className="font-headline-md text-[#1b1d0e] truncate">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-headline-md text-[#1b1d0e] truncate" title={profile?.first_name ? `${profile.first_name} ${profile.last_name}` : 'User'}>
                     {profile?.first_name ? `${profile.first_name} ${profile.last_name}` : 'User'}
                   </h3>
-                  <p className="font-body-sm text-outline-variant truncate">{user?.email}</p>
+                  <p className="font-body-sm text-outline-variant truncate" title={user?.email}>{user?.email}</p>
                 </div>
               </div>
               
               <nav className="space-y-2">
-                <button 
-                  onClick={() => setActiveTab('profile')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'profile' ? 'bg-[#154212] text-white' : 'text-on-surface-variant hover:bg-surface-container'}`}
-                >
-                  <User className="w-5 h-5" />
-                  Profile Details
-                </button>
-                <button 
-                  onClick={() => setActiveTab('orders')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'orders' ? 'bg-[#154212] text-white' : 'text-on-surface-variant hover:bg-surface-container'}`}
-                >
-                  <Package className="w-5 h-5" />
-                  Order History
-                </button>
-                <button 
-                  onClick={() => setActiveTab('wishlist')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'wishlist' ? 'bg-[#154212] text-white' : 'text-on-surface-variant hover:bg-surface-container'}`}
-                >
-                  <Heart className="w-5 h-5" />
-                  Wishlist
-                </button>
-                <button 
-                  onClick={() => setActiveTab('settings')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'settings' ? 'bg-[#154212] text-white' : 'text-on-surface-variant hover:bg-surface-container'}`}
-                >
-                  <Settings className="w-5 h-5" />
-                  Settings
-                </button>
+                {[
+                  { id: 'profile', label: 'Profile Details', icon: User },
+                  { id: 'orders', label: 'Order History', icon: Package },
+                  { id: 'wishlist', label: 'Wishlist', icon: Heart },
+                  { id: 'testimonials', label: 'My Testimonial', icon: MessageSquare },
+                  { id: 'settings', label: 'Settings', icon: Settings },
+                ].map(({ id, label, icon: Icon }) => (
+                  <button key={id}
+                    onClick={() => setActiveTab(id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === id ? 'bg-[#154212] text-white' : 'text-on-surface-variant hover:bg-surface-container'}`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {label}
+                  </button>
+                ))}
               </nav>
             </div>
             
@@ -243,30 +336,130 @@ export const Dashboard = () => {
             {activeTab === 'orders' && (
               <div>
                 <h2 className="font-headline-lg text-2xl text-[#1b1d0e] mb-6">Order History</h2>
-                <div className="text-center py-16 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 border-dashed">
-                  <Package className="w-12 h-12 text-outline-variant mx-auto mb-4" />
-                  <h3 className="font-headline-md text-lg text-on-surface mb-2">No orders yet</h3>
-                  <p className="font-body-md text-outline-variant max-w-sm mx-auto mb-6">
-                    Looks like you haven't made your first purchase. Explore our marketplace to discover organic wellness products.
-                  </p>
-                  <a href="/marketplace" className="inline-block px-6 py-3 bg-[#154212] text-white rounded-xl font-label-md hover:bg-[#2d5a27]">
-                    Browse Marketplace
-                  </a>
-                </div>
+                {ordersLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-16 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 border-dashed">
+                    <Package className="w-12 h-12 text-outline-variant mx-auto mb-4" />
+                    <h3 className="font-headline-md text-lg text-on-surface mb-2">No orders yet</h3>
+                    <p className="font-body-md text-outline-variant max-w-sm mx-auto mb-6">
+                      Looks like you haven't made your first purchase. Explore our marketplace to discover organic wellness products.
+                    </p>
+                    <a href="/marketplace" className="inline-block px-6 py-3 bg-[#154212] text-white rounded-xl font-label-md hover:bg-[#2d5a27]">
+                      Browse Marketplace
+                    </a>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {orders.map((order) => (
+                      <div key={order.id} className="bg-[#fcfcdb]/30 hover:bg-[#fbfbe2]/70 transition-colors rounded-3xl p-6 border border-outline-variant/20">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-6 border-b border-outline-variant/20 gap-4">
+                          <div>
+                            <p className="font-label-md text-outline-variant mb-2">
+                              Order #{order.id} • {new Date(order.created_at).toLocaleDateString()}
+                            </p>
+                            <span className={`inline-flex items-center px-4 py-1.5 rounded-full font-label-md text-sm capitalize shadow-sm ${
+                              order.status === 'delivered' ? 'bg-[#154212] text-white' :
+                              order.status === 'cancelled' ? 'bg-error text-white' :
+                              'bg-[#e8f3d6] text-[#154212]'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
+                          <div className="sm:text-right">
+                            <p className="font-label-md text-outline-variant mb-1">Total Amount</p>
+                            <p className="font-headline-md text-2xl text-[#1b1d0e]">₹{order.total}</p>
+                            <Link to={`/orders/${order.id}`}
+                              className="inline-flex items-center gap-1.5 text-sm text-[#154212] hover:underline mt-2 font-label-md bg-white px-3 py-1.5 rounded-lg border border-[#154212]/20 shadow-sm">
+                              <ExternalLink className="w-4 h-4" /> View Details
+                            </Link>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-5">
+                          {order.items.slice(0, 3).map((item) => (
+                            <div key={item.id} className="flex items-center gap-5">
+                              <div className="w-20 h-20 bg-white rounded-2xl overflow-hidden shrink-0 border border-outline-variant/10 shadow-sm">
+                                <img 
+                                  src={item.product_image || "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=200"} 
+                                  alt={item.product_name} 
+                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-headline-sm text-lg text-on-surface truncate">{item.product_name}</h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="font-body-md text-outline-variant bg-white px-2 py-0.5 rounded border border-outline-variant/10 shadow-sm text-sm">Qty: {item.quantity}</span>
+                                  {item.size && <span className="font-body-md text-outline-variant bg-white px-2 py-0.5 rounded border border-outline-variant/10 shadow-sm text-sm">{item.size}</span>}
+                                </div>
+                              </div>
+                              <p className="font-label-lg text-[#1b1d0e]">₹{item.price}</p>
+                            </div>
+                          ))}
+                          {order.items.length > 3 && (
+                            <p className="text-sm font-label-md text-outline-variant bg-white inline-block px-3 py-1 rounded-full border border-outline-variant/10">
+                              +{order.items.length - 3} more item{order.items.length - 3 !== 1 ? 's' : ''}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === 'wishlist' && (
               <div>
                 <h2 className="font-headline-lg text-2xl text-[#1b1d0e] mb-6">Wishlist</h2>
-                <div className="text-center py-16 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 border-dashed">
-                  <Heart className="w-12 h-12 text-outline-variant mx-auto mb-4" />
-                  <h3 className="font-headline-md text-lg text-on-surface mb-2">Your wishlist is empty</h3>
-                  <p className="font-body-md text-outline-variant max-w-sm mx-auto mb-6">
-                    Save your favorite items here to easily find them later.
-                  </p>
-                </div>
+                {wishlistLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : wishlistItems.length === 0 ? (
+                  <div className="text-center py-16 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 border-dashed">
+                    <Heart className="w-12 h-12 text-outline-variant mx-auto mb-4" />
+                    <h3 className="font-headline-md text-lg text-on-surface mb-2">Your wishlist is empty</h3>
+                    <p className="font-body-md text-outline-variant max-w-sm mx-auto mb-6">
+                      Save your favorite items here to easily find them later.
+                    </p>
+                    <a href="/marketplace" className="inline-block px-6 py-3 bg-[#154212] text-white rounded-xl font-label-md hover:bg-[#2d5a27]">
+                      Browse Marketplace
+                    </a>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {wishlistItems.map((item) => (
+                      <div key={item.id} className="bg-white rounded-3xl p-4 shadow-sm border border-outline-variant/10 group flex flex-col">
+                        <a href={`/product/${item.slug}`} className="block aspect-square rounded-2xl overflow-hidden bg-surface-container-lowest mb-4">
+                          <img 
+                            src={item.image || "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=1000"} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                          />
+                        </a>
+                        <h3 className="font-body-md text-[#1b1d0e] mb-1 truncate" title={item.name}>{item.name}</h3>
+                        <div className="flex items-center justify-between mt-auto pt-3">
+                          <span className="font-label-md text-lg text-[#1b1d0e]">₹{item.effective_price}</span>
+                          <button 
+                            onClick={() => toggleWishlist(item.product_id)}
+                            className="w-10 h-10 shrink-0 border border-error text-error bg-error/10 rounded-full flex items-center justify-center hover:bg-error hover:text-white transition-colors"
+                            aria-label="Remove from wishlist"
+                          >
+                            <Heart className="w-5 h-5 fill-current" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+            )}
+
+            {activeTab === 'testimonials' && (
+              <TestimonialTab />
             )}
 
             {activeTab === 'settings' && (

@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Filter, ChevronDown, ShoppingCart, Star } from 'lucide-react';
+import { Filter, ChevronDown, ShoppingCart, Star, Heart } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { useProducts } from '../hooks/useProducts';
 import { useCategories } from '../hooks/useCategories';
+import { useWishlist } from '../hooks/useWishlist';
 
 export const Marketplace = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated, isCustomer } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { addItem } = useCart();
   
   const searchParam = searchParams.get('search') || '';
   const categoryParam = searchParams.get('category') || '';
@@ -36,14 +40,11 @@ export const Marketplace = () => {
     setSearchParams(searchParams);
   };
 
-  const getImageUrl = (images: any[]) => {
-    if (images && images.length > 0) {
-      const primary = images.find(img => img.is_primary) || images[0];
-      // Cloudinary images normally use URL, if it's just the public_id, the frontend would construct it.
-      // Assuming DRF returns the full url if configured, or just path.
-      // If the seed failed to upload, it will fallback to this:
-      return primary.image; 
+  const getImageUrl = (product: any) => {
+    if (product.primary_image) {
+      return product.primary_image;
     }
+    // Fallback if needed
     return "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600";
   };
 
@@ -141,36 +142,61 @@ export const Marketplace = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {productsData?.results.map((product) => (
-                  <Link to={`/product/${product.slug}`} key={product.id} className="block group bg-white rounded-3xl p-4 shadow-sm hover:shadow-md transition-all border border-outline-variant/10">
-                    <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 bg-surface-container-lowest">
-                      <img 
-                        src={getImageUrl(product.images)} 
-                        alt={product.name} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-outline-variant/10">
-                        <span className="font-label-sm text-xs font-bold text-[#154212]">Organic</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="font-body-md text-[#1b1d0e] leading-tight truncate">{product.name}</h3>
-                      <div className="flex items-center gap-1 text-outline-variant text-sm font-body-sm">
-                        <Star className="w-3.5 h-3.5 text-[#1b1d0e] fill-[#1b1d0e]" />
-                        <span className="text-[#1b1d0e] font-medium">{product.rating}</span>
-                        <span>({product.review_count})</span>
-                      </div>
-                      <div className="flex justify-between items-end pt-2">
-                        <span className="font-label-md text-xl text-[#1b1d0e]">₹{product.effective_price}</span>
+                {productsData?.results.map((product) => {
+                  const wishlisted = isInWishlist(product.id);
+                  return (
+                    <div key={product.id} className="relative block group bg-white rounded-3xl p-4 shadow-sm hover:shadow-md transition-all border border-outline-variant/10">
+                      <Link to={`/product/${product.slug}`} className="block">
+                        <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 bg-surface-container-lowest">
+                          <img 
+                            src={getImageUrl(product)} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-outline-variant/10">
+                            <span className="font-label-sm text-xs font-bold text-[#154212]">Organic</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="font-body-md text-[#1b1d0e] leading-tight truncate">{product.name}</h3>
+                          <div className="flex items-center gap-1 text-outline-variant text-sm font-body-sm">
+                            <Star className="w-3.5 h-3.5 text-[#1b1d0e] fill-[#1b1d0e]" />
+                            <span className="text-[#1b1d0e] font-medium">{product.rating}</span>
+                            <span>({product.review_count})</span>
+                          </div>
+                          <div className="flex justify-between items-end pt-2">
+                            <span className="font-label-md text-xl text-[#1b1d0e]">₹{product.effective_price}</span>
+                          </div>
+                        </div>
+                      </Link>
+                      
+                      {/* Interactive Buttons (Outside Link) */}
+                      <div className="absolute bottom-4 right-4 flex gap-2">
+                        {!isAdmin && isAuthenticated && isCustomer && (
+                          <button 
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(product.id); }}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm ${
+                              wishlisted 
+                                ? 'bg-error/10 text-error hover:bg-error/20' 
+                                : 'bg-white text-on-surface-variant hover:bg-surface-container border border-outline-variant/20'
+                            }`}
+                            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                          >
+                            <Heart className={`w-4 h-4 ${wishlisted ? 'fill-current' : ''}`} />
+                          </button>
+                        )}
                         {!isAdmin && (
-                          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); /* Cart logic */ }} className="w-10 h-10 bg-[#f5f5dc] text-[#1b1d0e] rounded-full flex items-center justify-center hover:bg-[#154212] hover:text-white transition-colors">
+                          <button 
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(product); }} 
+                            className="w-10 h-10 bg-[#f5f5dc] text-[#1b1d0e] rounded-full flex items-center justify-center hover:bg-[#154212] hover:text-white transition-colors shadow-sm"
+                          >
                             <ShoppingCart className="w-4 h-4" />
                           </button>
                         )}
                       </div>
                     </div>
-                  </Link>
-                ))}
+                  );
+                })}
               </div>
               
               {/* Pagination */}

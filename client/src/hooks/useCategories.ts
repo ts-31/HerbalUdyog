@@ -10,7 +10,7 @@ export const useCategories = () => {
     const fetchCategories = async () => {
       try {
         const data = await productsApi.getCategories();
-        setCategories(data);
+        setCategories(Array.isArray(data) ? data : (data as any).results || []);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Unknown error occurred'));
       } finally {

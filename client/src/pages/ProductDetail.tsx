@@ -2,20 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, Star, ShoppingBag, Heart, Search, ShoppingCart } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { useProduct } from '../hooks/useProduct';
 import { useProducts } from '../hooks/useProducts';
+import { useWishlist } from '../hooks/useWishlist';
+import { ReviewForm } from '../components/products/ReviewForm';
 
 export const ProductDetail = () => {
   const { slug } = useParams();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated, isCustomer } = useAuth();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { addItem } = useCart();
   const [quantity, setQuantity] = useState('100g');
   const [activeTab, setActiveTab] = useState('Description');
   
   const { product, loading, error } = useProduct(slug);
   
+  // Track selected image
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Set initial selected image when product loads
+  useEffect(() => {
+    if (product?.images && product.images.length > 0) {
+      const primary = product.images.find((img: any) => img.is_primary) || product.images[0];
+      setSelectedImage(primary.image_url || primary.image);
+    }
+  }, [product]);
+  
   // Fetch related products from the same category
   const { data: relatedData } = useProducts({
-    category: product?.category.slug,
+    category: product?.category?.slug,
     page: '1'
   });
 
@@ -40,23 +56,11 @@ export const ProductDetail = () => {
     );
   }
 
-  const getImageUrl = (images: any[], fallbackIndex = 0) => {
-    if (images && images.length > 0) {
-      const img = images[fallbackIndex] || images[0];
-      return img.image;
-    }
-    return "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=1000";
-  };
-
-  const primaryImage = getImageUrl(product.images);
-  const thumbnails = [
-    primaryImage,
-    "https://images.unsplash.com/photo-1576092762791-dd9e2220abd1?auto=format&fit=crop&q=80&w=300",
-    "https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?auto=format&fit=crop&q=80&w=300",
-    "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=300"
-  ]; // Fallbacks for demo since we only have 1 image per product
+  const primaryImage = selectedImage || "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=1000";
+  const allImages = product.images || [];
 
   const relatedProducts = relatedData?.results.filter(p => p.id !== product.id).slice(0, 4) || [];
+  const wishlisted = isInWishlist(product.id);
 
   return (
     <div className="bg-[#fbfbe2] min-h-screen pb-20">
@@ -83,13 +87,22 @@ export const ProductDetail = () => {
                 <Search className="w-5 h-5" />
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-4">
-              {thumbnails.map((img, idx) => (
-                <button key={idx} className={`aspect-square rounded-2xl overflow-hidden border-2 ${idx === 0 ? 'border-primary' : 'border-transparent'} hover:border-primary/50 transition-colors bg-white`}>
-                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
+            {allImages.length > 0 && (
+              <div className="grid grid-cols-4 gap-4">
+                {allImages.map((img: any) => {
+                  const imgUrl = img.image_url || img.image;
+                  return (
+                    <button 
+                      key={img.id || imgUrl} 
+                      onClick={() => setSelectedImage(imgUrl)}
+                      className={`aspect-square rounded-2xl overflow-hidden border-2 ${selectedImage === imgUrl ? 'border-primary' : 'border-transparent'} hover:border-primary/50 transition-colors bg-white`}
+                    >
+                      <img src={imgUrl} alt={img.alt_text || 'Thumbnail'} className="w-full h-full object-cover" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Right - Info */}
@@ -146,37 +159,38 @@ export const ProductDetail = () => {
             </div>
 
             <div className="flex gap-4 mb-10">
-              {!isAdmin && (<button className="flex-1 bg-[#154212] text-white py-4 rounded-xl font-label-md text-lg hover:bg-[#2d5a27] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
-                <ShoppingBag className="w-5 h-5" />
-                Add to Cart
-              </button>)}
-              {!isAdmin && (<button className="w-16 h-16 shrink-0 border border-outline-variant rounded-xl flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors">
-                <Heart className="w-6 h-6" />
-              </button>)}
+              {!isAdmin && (
+                <button 
+                  onClick={() => addItem(product, 1, quantity)}
+                  className="flex-1 bg-[#154212] text-white py-4 rounded-xl font-label-md text-lg hover:bg-[#2d5a27] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  Add to Cart
+                </button>
+              )}
+              {!isAdmin && isAuthenticated && isCustomer && (
+                <button 
+                  onClick={() => toggleWishlist(product.id)}
+                  className={`w-16 h-16 shrink-0 border rounded-xl flex items-center justify-center transition-colors ${
+                    wishlisted 
+                      ? 'border-error text-error bg-error/10 hover:bg-error/20' 
+                      : 'border-outline-variant text-on-surface hover:bg-surface-container'
+                  }`}
+                  aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  <Heart className={`w-6 h-6 ${wishlisted ? 'fill-current' : ''}`} />
+                </button>
+              )}
             </div>
 
-            {/* Sourcing Card */}
-            <div className="bg-[#f5f5dc] rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6 border border-[#e4e4cc]">
-              <img 
-                src="https://images.unsplash.com/photo-1595825833427-bcfa0ba1b5bc?auto=format&fit=crop&q=80&w=150" 
-                alt="Farmer Rajesh" 
-                className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm shrink-0"
-              />
-              <div>
-                <p className="text-xs font-bold tracking-wider text-outline mb-1 uppercase font-body-sm">Directly Sourced</p>
-                <h4 className="font-label-md text-[#1b1d0e] mb-2">Cultivated by Farmer Rajesh Kumar</h4>
-                <p className="text-sm text-outline-variant leading-relaxed font-body-sm">
-                  Harvested 12 days ago in the pristine fields of Uttarakhand using 100% regenerative organic methods.
-                </p>
-              </div>
-            </div>
+
           </div>
         </div>
 
         {/* Tabs Section */}
         <div className="mb-20 border-b border-outline-variant/30">
           <div className="flex overflow-x-auto hide-scrollbar gap-8">
-            {['Description', 'Benefits', 'Ingredients'].map(tab => (
+            {['Description', 'Benefits', 'Ingredients', 'Reviews'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -192,9 +206,54 @@ export const ProductDetail = () => {
           </div>
           
           <div className="py-8 max-w-3xl">
-            <p className="text-[#42493e] font-body-md leading-relaxed mb-4 whitespace-pre-wrap">
-              {product.description}
-            </p>
+            {activeTab === 'Description' && (
+              <p className="text-[#42493e] font-body-md leading-relaxed mb-4 whitespace-pre-wrap">
+                {product.description}
+              </p>
+            )}
+            {activeTab === 'Reviews' && (
+              <div className="space-y-12">
+                <div>
+                  <h3 className="font-headline-md text-2xl mb-6">Customer Reviews</h3>
+                  {(!product.reviews || product.reviews.length === 0) ? (
+                    <p className="text-outline-variant font-body-md">No reviews yet. Be the first to review this product!</p>
+                  ) : (
+                    <div className="space-y-6">
+                      {product.reviews.map(review => (
+                        <div key={review.id} className="bg-white border border-outline-variant/20 rounded-2xl p-6 shadow-sm">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-label-lg font-bold text-[#1b1d0e]">{review.user_name}</h4>
+                            <span className="text-sm text-outline-variant font-body-sm">{new Date(review.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center text-[#154212] mb-3">
+                            {[1,2,3,4,5].map(star => (
+                              <Star key={star} className={`w-4 h-4 ${star <= review.rating ? 'fill-current' : 'text-outline-variant/30'}`} />
+                            ))}
+                          </div>
+                          <p className="font-body-md text-[#42493e]">{review.comment}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {isAuthenticated && isCustomer && (
+                  <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-8">
+                    <h3 className="font-headline-sm text-xl mb-6">Write a Review</h3>
+                    <ReviewForm slug={product.slug} onSuccess={() => window.location.reload()} />
+                  </div>
+                )}
+                {!isAuthenticated && (
+                  <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 text-center">
+                    <p className="font-body-md text-outline-variant mb-4">Please log in to write a review.</p>
+                    <Link to="/auth?mode=login" className="px-6 py-2 bg-[#154212] text-white rounded-lg font-label-md inline-block">Log In</Link>
+                  </div>
+                )}
+              </div>
+            )}
+            {(activeTab === 'Benefits' || activeTab === 'Ingredients') && (
+              <p className="text-outline-variant font-body-md italic">Information for {activeTab.toLowerCase()} is coming soon.</p>
+            )}
           </div>
         </div>
 
@@ -217,7 +276,7 @@ export const ProductDetail = () => {
               {relatedProducts.map((prod) => (
                 <Link to={`/product/${prod.slug}`} key={prod.id} className="block bg-white rounded-3xl p-4 shadow-sm border border-outline-variant/10 group cursor-pointer hover:shadow-md transition-all">
                   <div className="aspect-square rounded-2xl overflow-hidden bg-surface-container-lowest mb-4">
-                    <img src={getImageUrl(prod.images)} alt={prod.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={prod.primary_image || "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600"} alt={prod.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
                   <h3 className="font-body-md text-[#1b1d0e] mb-1 truncate">{prod.name}</h3>
                   <div className="flex items-center gap-1 text-outline-variant text-sm font-body-sm mb-3">

@@ -53,7 +53,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write('Seeding data...')
         
-        # 1. Create Admin User
+        # 1. Create or verify Admin User
         admin_email = os.environ.get('SEED_ADMIN_EMAIL', 'admin@herbaludyog.com')
         admin_pass = os.environ.get('SEED_ADMIN_PASSWORD', 'Admin@123')
         if not User.objects.filter(email=admin_email).exists():
@@ -66,7 +66,22 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'Created admin user: {admin_email}'))
         else:
             admin = User.objects.get(email=admin_email)
-            self.stdout.write(self.style.SUCCESS(f'Admin user already exists: {admin_email}'))
+            # Always verify required flags regardless of prior state
+            needs_save = False
+            if admin.role != 'admin':
+                admin.role = 'admin'
+                needs_save = True
+            if not admin.is_staff:
+                admin.is_staff = True
+                needs_save = True
+            if not admin.is_superuser:
+                admin.is_superuser = True
+                needs_save = True
+            if needs_save:
+                admin.save()
+                self.stdout.write(self.style.WARNING(f'Updated admin flags for: {admin_email}'))
+            else:
+                self.stdout.write(self.style.SUCCESS(f'Admin user verified: {admin_email}'))
 
         # 2. Create Categories
         category_names = list(set([p['category'] for p in PRODUCTS]))
@@ -79,6 +94,27 @@ class Command(BaseCommand):
             categories[name] = cat
             if created:
                 self.stdout.write(self.style.SUCCESS(f'Created category: {name}'))
+
+        # Image mappings for categories using generated artifacts
+        artifact_dir = r"C:\Users\tejas\.gemini\antigravity-ide\brain\228336b7-8256-4a85-993f-faee17c1431e"
+        supplement_images = [
+            os.path.join(artifact_dir, "ayurvedic_supplement_texture_1784450920726.png"),
+            os.path.join(artifact_dir, "ayurvedic_supplement_lifestyle_1784450933663.png"),
+            os.path.join(artifact_dir, "ayurvedic_supplement_angle_1784450944729.png")
+        ]
+        care_images = [
+            os.path.join(artifact_dir, "personal_care_texture_1784450962734.png"),
+            os.path.join(artifact_dir, "personal_care_lifestyle_1784450973672.png"),
+            os.path.join(artifact_dir, "personal_care_angle_1784450984689.png")
+        ]
+        
+        category_to_supp = {
+            "Ayurvedic Supplements": supplement_images,
+            "Daily Wellness": supplement_images,
+            "Herbal Formulations": supplement_images,
+            "Personal Care": care_images,
+            "Massage Oils & Balms": care_images
+        }
 
         # 3. Create Products and Upload Images
         for p_data in PRODUCTS:
@@ -102,33 +138,31 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(self.style.WARNING(f'Product already exists: {product.name}'))
                 
-            # Upload image to Cloudinary if no images exist
+            # Upload images to Cloudinary if no images exist
             if not product.images.exists():
-                self.stdout.write(f"Uploading image for {product.name}...")
-                try:
-                    # Download image to a temporary file
-                    response = requests.get(p_data['img'], stream=True)
-                    response.raise_for_status()
-                    
-                    fd, temp_path = tempfile.mkstemp(suffix='.jpg')
-                    with os.fdopen(fd, 'wb') as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            f.write(chunk)
-                            
-                    with open(temp_path, 'rb') as f:
-                        # Use CloudinaryField to save. ProductImage model expects a File.
-                        # We can also use cloudinary uploader and save the string path.
-                        upload_result = cloudinary.uploader.upload(f, folder="herbaludyog/products")
-                        
+                self.stdout.write(f"Attaching images for {product.name}...")
+                
+                # We will upload 4 images: 1 primary from Unsplash, 3 supplementary from local
+                images_to_upload = [(p_data['img'], True)]  # (source, is_primary)
+                
+                supp_imgs = category_to_supp.get(p_data['category'], supplement_images)
+                for local_img in supp_imgs:
+                    # Just store the path relative to media root, since we already copied them
+                    filename = os.path.basename(local_img)
+                    media_path = f"/media/products/{filename}"
+                    images_to_upload.append((media_path, False))
+                
+                for idx, (img_src, is_primary) in enumerate(images_to_upload):
+                    try:
                         ProductImage.objects.create(
                             product=product,
-                            image=upload_result['public_id'],
-                            is_primary=True,
-                            alt_text=product.name
+                            image=img_src,
+                            is_primary=is_primary,
+                            order=idx,
+                            alt_text=f"{product.name} image {idx + 1}"
                         )
-                    os.remove(temp_path)
-                    self.stdout.write(self.style.SUCCESS(f'Successfully uploaded image for {product.name}'))
-                except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'Failed to upload image for {product.name}: {str(e)}'))
+                        self.stdout.write(self.style.SUCCESS(f'  -> Attached image {idx+1}/4'))
+                    except Exception as e:
+                        self.stdout.write(self.style.ERROR(f'  -> Failed to attach image {idx+1}/4: {str(e)}'))
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded data!'))

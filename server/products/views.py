@@ -7,9 +7,12 @@ from .serializers import (
     CategorySerializer,
     ProductListSerializer,
     ProductDetailSerializer,
+    ReviewSerializer
 )
 from .filters import ProductFilter
 from .permissions import IsAdminOrReadOnly
+from rest_framework.decorators import action
+from rest_framework import permissions
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -68,3 +71,30 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def add_review(self, request, slug=None):
+        product = self.get_object()
+        user = request.user
+        
+        # Only customers should review products
+        if user.role != 'customer':
+            return Response({"detail": "Only customers can leave reviews."}, status=status.HTTP_403_FORBIDDEN)
+            
+        if product.reviews.filter(user=user).exists():
+            return Response({"detail": "You have already reviewed this product."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        serializer = ReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Save review
+        serializer.save(product=product, user=user)
+        
+        # Update product rating
+        reviews = product.reviews.all()
+        new_rating = sum(r.rating for r in reviews) / reviews.count()
+        product.rating = new_rating
+        product.review_count = reviews.count()
+        product.save()
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

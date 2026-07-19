@@ -1,6 +1,19 @@
 from rest_framework import serializers
 from cloudinary.utils import cloudinary_url
-from .models import Category, Product, ProductImage
+from .models import Category, Product, ProductImage, Review
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Review
+        fields = ('id', 'user', 'user_name', 'rating', 'comment', 'created_at')
+        read_only_fields = ('id', 'user', 'user_name', 'created_at')
+
+    def get_user_name(self, obj):
+        if obj.user.first_name:
+            return f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return obj.user.email.split('@')[0]
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -13,7 +26,15 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image:
-            url, _ = cloudinary_url(str(obj.image), secure=True)
+            img_str = str(obj.image)
+            if img_str.startswith('http'):
+                return img_str
+            if img_str.startswith('/'):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(img_str)
+                return f"http://127.0.0.1:8000{img_str}"
+            url, _ = cloudinary_url(img_str, secure=True)
             return url
         return None
 
@@ -35,7 +56,15 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image:
-            url, _ = cloudinary_url(str(obj.image), secure=True)
+            img_str = str(obj.image)
+            if img_str.startswith('http'):
+                return img_str
+            if img_str.startswith('/'):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(img_str)
+                return f"http://127.0.0.1:8000{img_str}"
+            url, _ = cloudinary_url(img_str, secure=True)
             return url
         return None
 
@@ -60,7 +89,15 @@ class ProductListSerializer(serializers.ModelSerializer):
         if not primary:
             primary = obj.images.first()
         if primary and primary.image:
-            url, _ = cloudinary_url(str(primary.image), secure=True, width=600, crop='fill')
+            img_str = str(primary.image)
+            if img_str.startswith('http'):
+                return img_str
+            if img_str.startswith('/'):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(img_str)
+                return f"http://127.0.0.1:8000{img_str}"
+            url, _ = cloudinary_url(img_str, secure=True, width=600, crop='fill')
             return url
         return None
 
@@ -72,6 +109,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(), source='category', write_only=True
     )
     images = ProductImageSerializer(many=True, read_only=True)
+    reviews = ReviewSerializer(many=True, read_only=True)
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(), write_only=True, required=False
     )
@@ -83,7 +121,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'description', 'price', 'discount_price', 'effective_price',
             'stock_quantity', 'sku', 'is_active', 'is_featured', 'rating',
             'review_count', 'tags', 'category', 'category_id',
-            'images', 'uploaded_images', 'created_at', 'updated_at',
+            'images', 'uploaded_images', 'reviews', 'created_at', 'updated_at',
         )
         read_only_fields = ('slug', 'sku', 'rating', 'review_count', 'created_at', 'updated_at')
 

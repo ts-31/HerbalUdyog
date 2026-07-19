@@ -15,6 +15,15 @@ export interface ProductImage {
   is_primary: boolean;
 }
 
+export interface Review {
+  id: number;
+  user: number;
+  user_name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -32,6 +41,7 @@ export interface Product {
   review_count: number;
   tags: string;
   images: ProductImage[];
+  reviews?: Review[];
 }
 
 export interface PaginatedResponse<T> {
@@ -68,5 +78,14 @@ export const productsApi = {
     const res = await apiClient.get('/api/products/categories/');
     if (!res.ok) throw new Error('Failed to fetch categories');
     return res.json() as Promise<Category[]>;
+  },
+
+  addReview: async (slug: string, payload: { rating: number, comment: string }) => {
+    const res = await apiClient.post(`/api/products/${slug}/add_review/`, payload);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.detail || 'Failed to submit review');
+    }
+    return res.json() as Promise<Review>;
   }
 };

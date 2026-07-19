@@ -17,6 +17,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isCustomer: boolean;
   login: (credentials: Record<string, string>) => Promise<void>;
+  adminLogin: (credentials: Record<string, string>) => Promise<void>;
   register: (data: Record<string, string>) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -68,8 +69,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const data = await authApi.login(credentials);
     localStorage.setItem('access_token', data.access);
     localStorage.setItem('refresh_token', data.refresh);
-    
+
     // Fetch profile after login
+    const res = await apiClient.get('/api/users/profile/');
+    const userData = await res.json();
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
+
+  const adminLogin = async (credentials: Record<string, string>) => {
+    const data = await authApi.adminLogin(credentials);
+    localStorage.setItem('access_token', data.access);
+    localStorage.setItem('refresh_token', data.refresh);
+
+    // Fetch profile after admin login
     const res = await apiClient.get('/api/users/profile/');
     const userData = await res.json();
     setUser(userData);
@@ -103,6 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAdmin: user?.role === 'admin',
     isCustomer: user?.role === 'customer',
     login,
+    adminLogin,
     register,
     logout,
   };

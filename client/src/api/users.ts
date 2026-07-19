@@ -3,6 +3,7 @@ import { apiClient } from './client';
 export interface UserProfile {
   id: number;
   email: string;
+  role: 'admin' | 'customer';
   first_name: string;
   last_name: string;
   phone_number: string;
@@ -12,8 +13,6 @@ export interface UserProfile {
   state: string;
   postal_code: string;
   country: string;
-  role: 'admin' | 'customer';
-  date_joined: string;
 }
 
 export const usersApi = {

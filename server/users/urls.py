@@ -1,22 +1,36 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib.auth import views as auth_views
 
 from .views import (
     RegisterView,
     CustomTokenObtainPairView,
+    AdminTokenObtainPairView,
+    CustomerTokenObtainPairView,
     LogoutView,
     UserProfileView,
-    ChangePasswordView
+    ChangePasswordView,
+    WishlistViewSet,
+    AdminStatsView,
+    AdminCustomersView,
 )
 
+router = DefaultRouter()
+router.register(r'wishlist', WishlistViewSet, basename='wishlist')
+
 urlpatterns = [
+    path('', include(router.urls)),
     path('register/', RegisterView.as_view(), name='auth_register'),
-    path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # Role-separated login endpoints
+    path('login/', CustomerTokenObtainPairView.as_view(), name='customer_token_obtain_pair'),
+    path('admin/login/', AdminTokenObtainPairView.as_view(), name='admin_token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('logout/', LogoutView.as_view(), name='auth_logout'),
     path('profile/', UserProfileView.as_view(), name='user_profile'),
     path('password/change/', ChangePasswordView.as_view(), name='auth_change_password'),
+    path('admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
+    path('admin/customers/', AdminCustomersView.as_view(), name='admin_customers'),
     
     # Password Reset (using Django's built-in views modified for API if needed, or default views)
     # Note: For a pure API backend, you usually write custom views for reset, 

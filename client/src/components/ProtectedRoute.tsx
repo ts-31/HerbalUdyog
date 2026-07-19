@@ -20,12 +20,19 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   }
 
   if (!isAuthenticated) {
+    // Redirect unauthenticated users to the correct login page based on which route they tried to access
+    if (requiredRole === 'admin') {
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   if (requiredRole && user?.role !== requiredRole) {
-    // Redirect to home if they don't have the required role
-    return <Navigate to="/" replace />;
+    // User is authenticated but has wrong role — redirect to their correct home
+    if (user?.role === 'admin') {
+      return <Navigate to="/admin" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

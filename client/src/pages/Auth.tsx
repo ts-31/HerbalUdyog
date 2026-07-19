@@ -13,19 +13,15 @@ export const Auth = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, register, isAuthenticated, user } = useAuth();
+  const { login, register, isAuthenticated, isCustomer } = useAuth();
 
+  // Customer-only page: redirect authenticated customers to dashboard
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && isCustomer) {
       const from = (location.state as any)?.from?.pathname;
-      if (from) {
-        navigate(from, { replace: true });
-      } else {
-        if (user.role === 'admin') navigate('/admin');
-        else navigate('/dashboard');
-      }
+      navigate(from || '/dashboard', { replace: true });
     }
-  }, [isAuthenticated, user, navigate, location]);
+  }, [isAuthenticated, isCustomer, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
