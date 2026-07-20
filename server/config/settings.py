@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 from decouple import config, Csv
+import urllib.parse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -97,20 +98,50 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='postgres'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT', default='5432', cast=int),
-        'OPTIONS': {
-            'sslmode': config('DB_SSLMODE', default='require'),
-            'ipv6': False,
-        },
+# Parse DATABASE_URL if provided (Neon DB format)
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    # Parse Neon DATABASE_URL
+    parsed = urllib.parse.urlparse(DATABASE_URL)
+    db_name = parsed.path[1:]  # Remove leading slash
+    db_user = parsed.username
+    db_password = parsed.password
+    db_host = parsed.hostname
+    db_port = parsed.port or 5432
+    
+    # Parse query parameters for SSL options
+    query_params = urllib.parse.parse_qs(parsed.query)
+    sslmode = query_params.get('sslmode', ['require'])[0]
+    
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db_name,
+            'USER': db_user,
+            'PASSWORD': db_password,
+            'HOST': db_host,
+            'PORT': db_port,
+            'OPTIONS': {
+                'sslmode': sslmode,
+            },
+        }
     }
-}
+else:
+    # Fallback to individual DB_* environment variables
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='postgres'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST'),
+            'PORT': config('DB_PORT', default='5432', cast=int),
+            'OPTIONS': {
+                'sslmode': config('DB_SSLMODE', default='require'),
+            },
+        }
+    }
 
 
 # Password validation

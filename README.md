@@ -6,7 +6,7 @@
   [![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
   [![Django](https://img.shields.io/badge/Django-6.0-green.svg)](https://www.djangoproject.com/)
-  [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E.svg)](https://supabase.com/)
+  [![Neon](https://img.shields.io/badge/Neon-PostgreSQL-0CC4E8.svg)](https://neon.tech/)
   
 </div>
 
@@ -49,7 +49,7 @@ Built with a focus on **Performance**, **Scalability**, and **Premium UI/UX Desi
 ### Backend (Server)
 * **Framework**: Django & Django REST Framework (DRF).
 * **Language**: Python 3.
-* **Database**: PostgreSQL hosted on **Supabase**.
+* **Database**: PostgreSQL hosted on **Neon**.
 * **Authentication**: JWT (JSON Web Tokens) via `djangorestframework-simplejwt`.
 * **Media Storage**: Cloudinary for scalable, cloud-hosted image delivery.
 * **API Documentation**: OpenAPI / Swagger integrated via `drf-spectacular`.
@@ -61,7 +61,7 @@ Built with a focus on **Performance**, **Scalability**, and **Premium UI/UX Desi
 ### Prerequisites
 * Node.js (v18+)
 * Python (3.10+)
-* A Supabase project (PostgreSQL)
+* A Neon project (PostgreSQL)
 * A Cloudinary account
 
 ### 1. Clone the Repository
@@ -81,12 +81,7 @@ pip install -r requirements.txt
 
 Create a `.env` file in the `server` directory using `.env.example` as a template:
 ```env
-DB_NAME=postgres
-DB_USER=postgres
-DB_PASSWORD=your_supabase_password
-DB_HOST=db.your_project.supabase.co
-DB_PORT=5432
-DB_SSLMODE=require
+DATABASE_URL=postgresql://neondb_owner:password@ep-xxx.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 SECRET_KEY=your_django_secret
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
