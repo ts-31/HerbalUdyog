@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Star } from 'lucide-react';
 import { productsApi } from '../../api/products';
+import { toast } from 'sonner';
 
 interface ReviewFormProps {
   slug: string;
@@ -17,11 +18,15 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ slug, onSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating < 1 || rating > 5) {
-      setError('Please select a valid rating');
+      const msg = 'Please select a valid rating';
+      setError(msg);
+      toast.error(msg);
       return;
     }
     if (!comment.trim()) {
-      setError('Please write a review comment');
+      const msg = 'Please write a review comment';
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -29,9 +34,12 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ slug, onSuccess }) => {
       setSubmitting(true);
       setError(null);
       await productsApi.addReview(slug, { rating, comment });
+      toast.success('Thank you for submitting your review!');
       onSuccess();
     } catch (err: any) {
-      setError(err.message || 'Failed to submit review');
+      const errMsg = err.message || 'Failed to submit review';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setSubmitting(false);
     }

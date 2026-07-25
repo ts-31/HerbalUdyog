@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { coreApi } from '../api/core';
+import { toast } from 'sonner';
 
 export const Contact = () => {
   const [form, setForm] = useState({
@@ -20,9 +21,12 @@ export const Contact = () => {
       setError(null);
       await coreApi.submitContact(form);
       setSuccess(true);
+      toast.success('Message sent! We will get back to you soon.');
       setForm({ name: '', email: '', subject: '', message: '' });
     } catch (err: any) {
-      setError(err.message || 'Failed to send message. Please try again.');
+      const errMsg = err.message || 'Failed to send message. Please try again.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setSubmitting(false);
     }

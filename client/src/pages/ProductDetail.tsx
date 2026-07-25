@@ -7,6 +7,7 @@ import { useProduct } from '../hooks/useProduct';
 import { useProducts } from '../hooks/useProducts';
 import { useWishlist } from '../hooks/useWishlist';
 import { ReviewForm } from '../components/products/ReviewForm';
+import { toast } from 'sonner';
 
 export const ProductDetail = () => {
   const { slug } = useParams();
@@ -170,7 +171,14 @@ export const ProductDetail = () => {
               )}
               {!isAdmin && isAuthenticated && isCustomer && (
                 <button 
-                  onClick={() => toggleWishlist(product.id)}
+                  onClick={() => {
+                    toggleWishlist(product.id);
+                    if (wishlisted) {
+                      toast.info(`Removed ${product.name} from wishlist`);
+                    } else {
+                      toast.success(`Saved ${product.name} to wishlist`);
+                    }
+                  }}
                   className={`w-16 h-16 shrink-0 border rounded-xl flex items-center justify-center transition-colors ${
                     wishlisted 
                       ? 'border-error text-error bg-error/10 hover:bg-error/20' 

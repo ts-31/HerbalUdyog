@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
 export const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -31,6 +32,7 @@ export const Auth = () => {
     try {
       if (isLogin) {
         await login({ email, password });
+        toast.success('Welcome back!');
       } else {
         await register({ 
           email, 
@@ -38,9 +40,12 @@ export const Auth = () => {
           first_name: firstName,
           last_name: lastName
         });
+        toast.success('Account created successfully!');
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please check your credentials.');
+      const errMsg = err.message || 'Authentication failed. Please check your credentials.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

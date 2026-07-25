@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useOrders } from '../hooks/useOrders';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
 export const Checkout = () => {
   const { items, updateQuantity, removeItem, cartTotal, itemCount, clearCart } = useCart();
@@ -22,6 +23,7 @@ export const Checkout = () => {
 
   const handleCheckout = async () => {
     if (!isAuthenticated) {
+      toast.info('Please log in to complete your purchase');
       navigate('/auth');
       return;
     }
@@ -40,10 +42,13 @@ export const Checkout = () => {
       };
       
       await placeOrder(payload as any);
+      toast.success('Order placed successfully! Thank you for shopping with HerbalUdyog.');
       clearCart();
       navigate('/dashboard', { state: { tab: 'orders' } });
     } catch (err: any) {
-      setOrderError(err.message || 'Failed to place order. Please try again.');
+      const errMsg = err.message || 'Failed to place order. Please try again.';
+      setOrderError(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsPlacingOrder(false);
     }

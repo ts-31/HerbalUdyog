@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
 export const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -26,9 +27,12 @@ export const AdminLogin = () => {
     setLoading(true);
     try {
       await adminLogin({ email, password });
+      toast.success('Admin authenticated successfully');
       navigate('/admin', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Admin login failed. Please check your credentials.');
+      const errMsg = err.message || 'Admin login failed. Please check your credentials.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

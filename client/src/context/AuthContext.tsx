@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '../api/auth';
 import { apiClient } from '../api/client';
+import { toast } from 'sonner';
 
 interface User {
   id: number;
@@ -96,17 +97,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    try {
-      await authApi.logout();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      setUser(null);
-      setIsAuthenticated(false);
-      window.dispatchEvent(new Event('auth-logout'));
-    }
+    const performLogout = async () => {
+      try {
+        await authApi.logout();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        setUser(null);
+        setIsAuthenticated(false);
+        window.dispatchEvent(new Event('auth-logout'));
+      }
+    };
+
+    toast.promise(performLogout(), {
+      loading: 'Logging out...',
+      success: 'Logged out successfully',
+      error: 'Logged out',
+    });
   };
 
   const value = {

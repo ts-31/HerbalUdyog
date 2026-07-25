@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Package, ChevronDown } from 'lucide-react';
 import { adminOrdersApi } from '../../api/admin';
 import { Order } from '../../api/orders';
+import { toast } from 'sonner';
 
 const STATUS_OPTIONS = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
@@ -39,8 +40,9 @@ export const AdminOrdersTab = () => {
       setUpdatingId(id);
       const updated = await adminOrdersApi.updateStatus(id, status);
       setOrders(prev => prev.map(o => o.id === id ? updated : o));
-    } catch (err) {
-      alert('Failed to update status');
+      toast.success(`Order #${id} status updated to ${status}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update order status');
     } finally {
       setUpdatingId(null);
     }

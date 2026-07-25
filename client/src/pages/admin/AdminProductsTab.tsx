@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, X, Check, Upload, ToggleLeft, ToggleRight, Search
 import { adminProductsApi } from '../../api/admin';
 import { adminCategoriesApi } from '../../api/admin';
 import { Product, Category } from '../../api/products';
+import { toast } from 'sonner';
 
 // ─── Product Form Modal ───────────────────────────────────────────────────────
 
@@ -40,13 +41,17 @@ const ProductForm = ({ product, categories, onClose, onSaved }: ProductFormProps
       images.forEach(img => fd.append('uploaded_images', img));
       if (product) {
         await adminProductsApi.update(product.slug, fd);
+        toast.success(`Product "${form.name}" updated successfully`);
       } else {
         await adminProductsApi.create(fd);
+        toast.success(`Product "${form.name}" created successfully`);
       }
       onSaved();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to save product');
+      const errMsg = err.message || 'Failed to save product';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -172,7 +177,7 @@ export const AdminProductsTab = () => {
         adminProductsApi.list({ search }),
         adminCategoriesApi.list(),
       ]);
-      setProducts(prod.results || prod || []);
+      setProducts(Array.isArray(prod) ? prod : prod.results || []);
       setCategories(Array.isArray(cats) ? cats : (cats as any).results || []);
     } catch (e) {
       console.error(e);
@@ -189,8 +194,9 @@ export const AdminProductsTab = () => {
     try {
       await adminProductsApi.delete(slug);
       setProducts(prev => prev.filter(p => p.slug !== slug));
-    } catch (e) {
-      alert('Failed to delete product.');
+      toast.info('Product deleted');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to delete product');
     } finally {
       setDeleting(null);
     }

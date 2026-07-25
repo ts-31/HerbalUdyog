@@ -18,11 +18,13 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { CartDrawer } from './components/cart/CartDrawer';
+import { Toaster } from 'sonner';
 
 function App() {
   return (
     <AuthProvider>
       <CartProvider>
+        <Toaster position="top-right" richColors closeButton />
         <Router>
           <CartDrawer />
           <Routes>

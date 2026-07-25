@@ -11,6 +11,7 @@ export interface Category {
 export interface ProductImage {
   id: number;
   image: string;
+  image_url?: string;
   alt_text: string;
   is_primary: boolean;
 }
@@ -41,6 +42,7 @@ export interface Product {
   review_count: number;
   tags: string;
   images: ProductImage[];
+  primary_image?: string;
   reviews?: Review[];
 }
 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '../api/products';
+import { toast } from 'sonner';
 
 export interface CartItem {
   id: string;
@@ -49,11 +50,13 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       }
       return [...prev, { id: `${product.id}-${size}`, product, quantity, size }];
     });
+    toast.success(`Added ${product.name} to cart`);
     setIsCartOpen(true);
   };
 
   const removeItem = (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
+    toast.info('Item removed from cart');
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -66,6 +69,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const clearCart = () => {
     setItems([]);
+    toast.info('Cart cleared');
   };
 
   const cartTotal = items.reduce((total, item) => {
