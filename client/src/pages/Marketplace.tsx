@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Filter, ChevronDown, ShoppingCart, Star, Heart } from 'lucide-react';
+import { Filter, ChevronDown, ShoppingCart, Star, Heart, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -12,6 +12,7 @@ export const Marketplace = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addItem } = useCart();
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   const searchParam = searchParams.get('search') || '';
   const categoryParam = searchParams.get('category') || '';
@@ -33,6 +34,7 @@ export const Marketplace = () => {
     }
     searchParams.set('page', '1');
     setSearchParams(searchParams);
+    setIsFilterOpen(false); // Close filter on mobile after selection
   };
 
   const handlePageChange = (newPage: number) => {
@@ -48,6 +50,46 @@ export const Marketplace = () => {
     return "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600";
   };
 
+  const FiltersContent = () => (
+    <div>
+      <h3 className="font-label-md text-lg border-b border-outline/20 pb-2 mb-4">Categories</h3>
+      {categoriesLoading ? (
+         <div className="animate-pulse space-y-3">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-4 bg-outline-variant/30 rounded w-3/4"></div>)}
+         </div>
+      ) : (
+        <ul className="space-y-3">
+          <li>
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <input 
+                type="radio" 
+                name="category_mobile"
+                checked={categoryParam === ''}
+                onChange={() => handleCategorySelect('')}
+                className="w-4 h-4 rounded-full border-outline text-primary focus:ring-primary accent-primary" 
+              />
+              <span className={`font-body-md ${categoryParam === '' ? 'text-primary font-medium' : 'text-on-surface-variant group-hover:text-primary'}`}>All Products</span>
+            </label>
+          </li>
+          {categories.map((cat) => (
+            <li key={cat.slug}>
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input 
+                  type="radio" 
+                  name="category_mobile"
+                  checked={categoryParam === cat.slug}
+                  onChange={() => handleCategorySelect(cat.slug)}
+                  className="w-4 h-4 rounded-full border-outline text-primary focus:ring-primary accent-primary" 
+                />
+                <span className={`font-body-md ${categoryParam === cat.slug ? 'text-primary font-medium' : 'text-on-surface-variant group-hover:text-primary'}`}>{cat.name}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
   return (
     <div className="max-w-[1200px] mx-auto px-6 py-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
@@ -59,58 +101,41 @@ export const Marketplace = () => {
         </div>
         <div className="flex gap-4">
           <button
-                       className="flex items-center gap-2 px-4 py-2 border border-outline/30 rounded-full font-label-md text-on-surface hover:bg-surface-container transition-colors">
+            onClick={() => setIsFilterOpen(true)}
+            className="md:hidden flex items-center gap-2 px-4 py-2 border border-outline/30 rounded-full font-label-md text-on-surface hover:bg-surface-container transition-colors"
+          >
             <Filter className="w-4 h-4" />
             Filters
           </button>
           <button
-                       className="flex items-center gap-2 px-4 py-2 border border-outline/30 rounded-full font-label-md text-on-surface hover:bg-surface-container transition-colors">
+            className="flex items-center gap-2 px-4 py-2 border border-outline/30 rounded-full font-label-md text-on-surface hover:bg-surface-container transition-colors"
+          >
             Sort by: Featured
             <ChevronDown className="w-4 h-4" />
           </button>
         </div>
       </div>
 
+      {/* Mobile Filter Drawer */}
+      <div className={`fixed inset-0 z-[60] transform transition-transform duration-300 ease-in-out ${isFilterOpen ? 'translate-x-0' : '-translate-x-full md:hidden'}`}>
+        <div className="absolute inset-0 bg-black/50" onClick={() => setIsFilterOpen(false)}></div>
+        <div className="absolute inset-y-0 left-0 w-[280px] bg-surface shadow-xl flex flex-col h-full">
+          <div className="flex items-center justify-between p-6 border-b border-outline-variant/20">
+            <span className="font-display-lg text-2xl font-bold text-primary">Filters</span>
+            <button onClick={() => setIsFilterOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <FiltersContent />
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row gap-12">
         {/* Sidebar Filters */}
         <aside className="w-full md:w-64 shrink-0 hidden md:block space-y-8">
-          <div>
-            <h3 className="font-label-md text-lg border-b border-outline/20 pb-2 mb-4">Categories</h3>
-            {categoriesLoading ? (
-               <div className="animate-pulse space-y-3">
-                  {[1, 2, 3, 4].map(i => <div key={i} className="h-4 bg-outline-variant/30 rounded w-3/4"></div>)}
-               </div>
-            ) : (
-              <ul className="space-y-3">
-                <li>
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="category"
-                      checked={categoryParam === ''}
-                      onChange={() => handleCategorySelect('')}
-                      className="w-4 h-4 rounded-full border-outline text-primary focus:ring-primary accent-primary" 
-                    />
-                    <span className={`font-body-md ${categoryParam === '' ? 'text-primary font-medium' : 'text-on-surface-variant group-hover:text-primary'}`}>All Products</span>
-                  </label>
-                </li>
-                {categories.map((cat) => (
-                  <li key={cat.slug}>
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <input 
-                        type="radio" 
-                        name="category"
-                        checked={categoryParam === cat.slug}
-                        onChange={() => handleCategorySelect(cat.slug)}
-                        className="w-4 h-4 rounded-full border-outline text-primary focus:ring-primary accent-primary" 
-                      />
-                      <span className={`font-body-md ${categoryParam === cat.slug ? 'text-primary font-medium' : 'text-on-surface-variant group-hover:text-primary'}`}>{cat.name}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <FiltersContent />
         </aside>
 
         {/* Product Grid */}

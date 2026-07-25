@@ -6,9 +6,9 @@ import { MobileNav } from './MobileNav';
 
 export const Layout = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-surface text-on-surface">
+    <div className="min-h-screen flex flex-col bg-surface text-on-surface pb-20 md:pb-0">
       <Navbar />
-      <main className="flex-1 w-full pb-20 md:pb-0">
+      <main className="flex-1 w-full">
         <Outlet />
       </main>
       <Footer />

@@ -89,14 +89,14 @@ export const ProductDetail = () => {
               </button>
             </div>
             {allImages.length > 0 && (
-              <div className="grid grid-cols-4 gap-4">
+              <div className="flex overflow-x-auto gap-4 hide-scrollbar snap-x pb-2">
                 {allImages.map((img: any) => {
                   const imgUrl = img.image_url || img.image;
                   return (
                     <button 
                       key={img.id || imgUrl} 
                       onClick={() => setSelectedImage(imgUrl)}
-                      className={`aspect-square rounded-2xl overflow-hidden border-2 ${selectedImage === imgUrl ? 'border-primary' : 'border-transparent'} hover:border-primary/50 transition-colors bg-white`}
+                      className={`w-20 h-20 sm:w-24 sm:h-24 shrink-0 snap-start rounded-2xl overflow-hidden border-2 ${selectedImage === imgUrl ? 'border-primary' : 'border-transparent'} hover:border-primary/50 transition-colors bg-white`}
                     >
                       <img src={imgUrl} alt={img.alt_text || 'Thumbnail'} className="w-full h-full object-cover" />
                     </button>
