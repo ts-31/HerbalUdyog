@@ -55,7 +55,7 @@ export const AdminContactTab = () => {
       ) : (
         <div className="space-y-3">
           {inquiries.map(inquiry => (
-            <div key={inquiry.id} className={`bg-white rounded-2xl border ${inquiry.is_resolved ? 'border-outline-variant/20' : 'border-yellow-300'} overflow-hidden`}>
+            <div key={inquiry.id} className={`bg-surface-container-lowest rounded-[2rem] border ${inquiry.is_resolved ? 'border-outline-variant/20' : 'border-yellow-300'} overflow-hidden`}>
               <div
                 className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-container/40 transition-colors"
                 onClick={() => setExpanded(expanded === inquiry.id ? null : (inquiry.id as number))}

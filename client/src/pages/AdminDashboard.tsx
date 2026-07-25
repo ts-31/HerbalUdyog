@@ -72,9 +72,9 @@ export const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex">
+    <div className="min-h-screen bg-surface flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-outline-variant/20 flex-col h-screen sticky top-0 hidden md:flex shadow-sm">
+      <aside className="w-64 bg-surface-container-lowest border-r border-outline-variant/20 flex-col h-screen sticky top-0 hidden md:flex shadow-sm">
         <div className="p-6 border-b border-outline-variant/10">
           <h1 className="font-bold text-lg text-on-surface tracking-tight">HerbalUdyog</h1>
           <p className="text-xs text-on-surface-variant mt-0.5">Admin Panel</p>
@@ -121,7 +121,7 @@ export const AdminDashboard = () => {
       {/* Main */}
       <main className="flex-1 overflow-y-auto min-h-screen">
         {/* Top bar */}
-        <header className="bg-white border-b border-outline-variant/20 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <header className="bg-surface-container-lowest border-b border-outline-variant/20 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
             <h2 className="text-lg font-semibold text-on-surface capitalize">
               {NAV_ITEMS.find(n => n.id === activeTab)?.label}
@@ -176,7 +176,7 @@ export const AdminDashboard = () => {
                     note: 'From all orders',
                   },
                 ].map(({ label, icon: Icon, color, value, note }) => (
-                  <div key={label} className="bg-white rounded-2xl border border-outline-variant/20 p-5">
+                  <div key={label} className="bg-surface-container-lowest rounded-[2rem] border border-outline-variant/20 p-5">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm text-on-surface-variant">{label}</span>
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}>
@@ -190,7 +190,7 @@ export const AdminDashboard = () => {
               </div>
 
               {/* Quick actions */}
-              <div className="bg-white rounded-2xl border border-outline-variant/20 p-6">
+              <div className="bg-surface-container-lowest rounded-[2rem] border border-outline-variant/20 p-6">
                 <h3 className="font-semibold text-on-surface mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {[

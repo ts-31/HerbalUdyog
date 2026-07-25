@@ -59,7 +59,7 @@ const ProductForm = ({ product, categories, onClose, onSaved }: ProductFormProps
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center overflow-y-auto py-8 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
+      <div className="bg-surface-container-lowest rounded-[2rem] shadow-sm w-full max-w-2xl">
         <div className="flex items-center justify-between p-6 border-b border-outline-variant/20">
           <h2 className="font-headline-md text-xl text-on-surface">
             {product ? 'Edit Product' : 'Create New Product'}
@@ -231,7 +231,7 @@ export const AdminProductsTab = () => {
       ) : products.length === 0 ? (
         <div className="text-center py-16 text-on-surface-variant">No products found.</div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-outline-variant/20">
+        <div className="overflow-x-auto rounded-[2rem] border border-outline-variant/20">
           <table className="w-full text-sm">
             <thead className="bg-surface-container-low">
               <tr>

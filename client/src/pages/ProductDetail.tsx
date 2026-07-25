@@ -7,7 +7,9 @@ import { useProduct } from '../hooks/useProduct';
 import { useProducts } from '../hooks/useProducts';
 import { useWishlist } from '../hooks/useWishlist';
 import { ReviewForm } from '../components/products/ReviewForm';
+import { Button } from '../components/ui/Button';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const ProductDetail = () => {
   const { slug } = useParams();
@@ -42,7 +44,7 @@ export const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#fbfbe2] min-h-screen pb-20 pt-20 flex justify-center">
+      <div className="bg-surface min-h-screen pb-20 pt-20 flex justify-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -50,7 +52,7 @@ export const ProductDetail = () => {
 
   if (error || !product) {
     return (
-      <div className="bg-[#fbfbe2] min-h-screen pb-20 pt-20 text-center">
+      <div className="bg-surface min-h-screen pb-20 pt-20 text-center">
         <h2 className="font-display-md text-2xl text-error mb-4">Product not found</h2>
         <Link to="/marketplace" className="text-primary underline">Return to Marketplace</Link>
       </div>
@@ -63,111 +65,147 @@ export const ProductDetail = () => {
   const relatedProducts = relatedData?.results.filter(p => p.id !== product.id).slice(0, 4) || [];
   const wishlisted = isInWishlist(product.id);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div className="bg-[#fbfbe2] min-h-screen pb-20">
-      <div className="max-w-[1200px] mx-auto px-6 py-8">
+    <div className="bg-surface min-h-screen pb-32">
+      <div className="max-w-[1200px] mx-auto px-6 py-12">
         {/* Breadcrumbs */}
-        <div className="flex items-center text-sm text-outline-variant mb-8 space-x-2 font-body-sm">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center text-xs text-on-surface-variant mb-12 space-x-2 font-label-sm uppercase tracking-widest"
+        >
           <Link to="/" className="hover:text-primary transition-colors">Home</Link>
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-3 h-3" />
           <Link to="/marketplace" className="hover:text-primary transition-colors">Marketplace</Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-on-surface font-medium">{product.name}</span>
-        </div>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-on-surface font-semibold">{product.name}</span>
+        </motion.div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 xl:gap-24 mb-32">
           {/* Left - Images */}
-          <div className="space-y-4">
-            <div className="aspect-[4/3] sm:aspect-square bg-white rounded-3xl overflow-hidden relative border border-outline-variant/20 shadow-sm">
-              <img 
-                src={primaryImage} 
-                alt={product.name} 
-                className="w-full h-full object-cover"
-              />
-              <button className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full shadow-sm flex items-center justify-center hover:bg-white transition-colors text-on-surface">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="space-y-6"
+          >
+            <div className="aspect-[4/3] sm:aspect-square bg-surface-container-lowest rounded-[2rem] overflow-hidden relative border border-outline-variant/30 group">
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={primaryImage}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  src={primaryImage} 
+                  alt={product.name} 
+                  className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700"
+                />
+              </AnimatePresence>
+              <button className="absolute top-6 right-6 w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-sm flex items-center justify-center hover:bg-white transition-colors text-on-surface opacity-0 group-hover:opacity-100 duration-300">
                 <Search className="w-5 h-5" />
               </button>
             </div>
             {allImages.length > 0 && (
-              <div className="flex overflow-x-auto gap-4 hide-scrollbar snap-x pb-2">
+              <div className="flex overflow-x-auto gap-4 hide-scrollbar snap-x pb-4">
                 {allImages.map((img: any) => {
                   const imgUrl = img.image_url || img.image;
                   return (
                     <button 
                       key={img.id || imgUrl} 
                       onClick={() => setSelectedImage(imgUrl)}
-                      className={`w-20 h-20 sm:w-24 sm:h-24 shrink-0 snap-start rounded-2xl overflow-hidden border-2 ${selectedImage === imgUrl ? 'border-primary' : 'border-transparent'} hover:border-primary/50 transition-colors bg-white`}
+                      className={`w-20 h-20 sm:w-24 sm:h-24 shrink-0 snap-start rounded-2xl overflow-hidden border-2 transition-all ${selectedImage === imgUrl ? 'border-primary ring-4 ring-primary/10' : 'border-transparent hover:border-outline-variant'} bg-surface-container-lowest`}
                     >
-                      <img src={imgUrl} alt={img.alt_text || 'Thumbnail'} className="w-full h-full object-cover" />
+                      <img src={imgUrl} alt={img.alt_text || 'Thumbnail'} className="w-full h-full object-cover mix-blend-multiply" />
                     </button>
                   );
                 })}
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Right - Info */}
-          <div>
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col justify-center"
+          >
             {product.is_featured && (
-              <span className="inline-block bg-[#ccebc7] text-[#154212] px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-                Featured Product
-              </span>
+              <motion.span variants={itemVariants} className="inline-block bg-primary text-on-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6 w-max shadow-sm">
+                Featured
+              </motion.span>
             )}
-            <h1 className="font-display-lg text-4xl md:text-5xl mb-4 text-[#1b1d0e]">
+            <motion.h1 variants={itemVariants} className="font-display-lg text-4xl md:text-5xl lg:text-6xl mb-6 tracking-tight text-on-surface">
               {product.name}
-            </h1>
+            </motion.h1>
             
-            <div className="flex flex-wrap items-center gap-4 text-sm text-outline-variant mb-6 font-body-sm">
-              <div className="flex items-center text-[#154212]">
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4 text-sm text-on-surface-variant mb-8 font-body-sm">
+              <div className="flex items-center text-primary">
                 <Star className="w-4 h-4 fill-current" />
-                <span className="ml-1 text-[#1b1d0e] font-medium">{product.rating}</span>
+                <span className="ml-1.5 text-on-surface font-medium">{product.rating}</span>
               </div>
-              <span>({product.review_count} Reviews)</span>
-              <span className="hidden sm:inline">|</span>
-              <span>SKU: {product.sku || `HZ-${product.id}`}</span>
-            </div>
+              <span className="opacity-50">•</span>
+              <span>{product.review_count} Reviews</span>
+              <span className="opacity-50 hidden sm:inline">•</span>
+              <span className="font-mono text-xs text-on-surface-variant/70">SKU: {product.sku || `HZ-${product.id}`}</span>
+            </motion.div>
             
-            <div className="flex items-center gap-4 mb-2">
-              <span className="text-3xl font-bold text-[#1b1d0e]">₹{product.effective_price}</span>
+            <motion.div variants={itemVariants} className="flex items-end gap-4 mb-3">
+              <span className="text-4xl font-display-md font-semibold text-on-surface">₹{product.effective_price}</span>
               {product.discount_price && (
                 <>
-                  <span className="text-xl line-through text-outline-variant">₹{product.price}</span>
-                  <span className="text-[#ba1a1a] font-medium text-sm">Sale</span>
+                  <span className="text-xl line-through text-on-surface-variant/50 mb-1">₹{product.price}</span>
+                  <span className="text-error font-semibold text-sm mb-2 uppercase tracking-wide">Sale</span>
                 </>
               )}
-            </div>
-            <p className="text-sm text-outline-variant mb-8 font-body-sm">
+            </motion.div>
+            <motion.p variants={itemVariants} className="text-sm text-on-surface-variant mb-12 font-body-sm">
               Tax included. Shipping calculated at checkout.
-            </p>
+            </motion.p>
             
-            <div className="mb-8">
-              <p className="font-label-md text-on-surface mb-3">Quantity (Grams)</p>
+            <motion.div variants={itemVariants} className="mb-12">
+              <p className="font-label-md text-xs uppercase tracking-widest text-on-surface-variant mb-4">Quantity (Grams)</p>
               <div className="flex flex-wrap gap-3">
                 {['100g', '250g', '500g'].map(size => (
                   <button 
                     key={size}
                     onClick={() => setQuantity(size)}
-                    className={`px-8 py-3 rounded-full border text-sm font-medium transition-colors ${
+                    className={`px-8 py-3 rounded-full border text-sm font-semibold transition-all ${
                       quantity === size 
-                        ? 'bg-[#154212] border-[#154212] text-white' 
-                        : 'bg-transparent border-outline-variant text-on-surface hover:border-[#154212]'
+                        ? 'bg-primary border-primary text-on-primary shadow-md transform scale-105' 
+                        : 'bg-transparent border-outline-variant text-on-surface hover:border-on-surface hover:bg-surface-container'
                     }`}
                   >
                     {size}
                   </button>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
-            <div className="flex gap-4 mb-10">
+            <motion.div variants={itemVariants} className="flex gap-4 mb-12">
               {!isAdmin && (
-                <button 
+                <Button 
+                  size="lg"
                   onClick={() => addItem(product, 1, quantity)}
-                  className="flex-1 bg-[#154212] text-white py-4 rounded-xl font-label-md text-lg hover:bg-[#2d5a27] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                  className="flex-1 text-lg h-14"
+                  leftIcon={<ShoppingBag className="w-5 h-5" />}
                 >
-                  <ShoppingBag className="w-5 h-5" />
                   Add to Cart
-                </button>
+                </Button>
               )}
               {!isAdmin && isAuthenticated && isCustomer && (
                 <button 
@@ -179,129 +217,162 @@ export const ProductDetail = () => {
                       toast.success(`Saved ${product.name} to wishlist`);
                     }
                   }}
-                  className={`w-16 h-16 shrink-0 border rounded-xl flex items-center justify-center transition-colors ${
+                  className={`w-14 h-14 shrink-0 border rounded-2xl flex items-center justify-center transition-all ${
                     wishlisted 
-                      ? 'border-error text-error bg-error/10 hover:bg-error/20' 
-                      : 'border-outline-variant text-on-surface hover:bg-surface-container'
+                      ? 'border-error text-error bg-error/10 hover:bg-error/20 scale-105' 
+                      : 'border-outline-variant text-on-surface-variant hover:text-on-surface hover:border-on-surface active:scale-95'
                   }`}
                   aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
                 >
-                  <Heart className={`w-6 h-6 ${wishlisted ? 'fill-current' : ''}`} />
+                  <Heart className={`w-6 h-6 transition-transform ${wishlisted ? 'fill-current scale-110' : 'hover:scale-110'}`} />
                 </button>
               )}
-            </div>
-
-
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* Tabs Section */}
-        <div className="mb-20 border-b border-outline-variant/30">
-          <div className="flex overflow-x-auto hide-scrollbar gap-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          className="mb-32"
+        >
+          <div className="flex overflow-x-auto hide-scrollbar gap-8 border-b border-outline-variant/30 mb-10">
             {['Description', 'Benefits', 'Ingredients', 'Reviews'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-base whitespace-nowrap font-label-md transition-colors ${
+                className={`pb-4 text-sm uppercase tracking-widest font-label-md transition-all relative ${
                   activeTab === tab 
-                    ? 'text-[#154212] border-b-2 border-[#154212]' 
-                    : 'text-outline-variant hover:text-[#1b1d0e]'
+                    ? 'text-primary font-bold' 
+                    : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
                 {tab}
+                {activeTab === tab && (
+                  <motion.div 
+                    layoutId="tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" 
+                  />
+                )}
               </button>
             ))}
           </div>
           
-          <div className="py-8 max-w-3xl">
-            {activeTab === 'Description' && (
-              <p className="text-[#42493e] font-body-md leading-relaxed mb-4 whitespace-pre-wrap">
-                {product.description}
-              </p>
-            )}
-            {activeTab === 'Reviews' && (
-              <div className="space-y-12">
-                <div>
-                  <h3 className="font-headline-md text-2xl mb-6">Customer Reviews</h3>
-                  {(!product.reviews || product.reviews.length === 0) ? (
-                    <p className="text-outline-variant font-body-md">No reviews yet. Be the first to review this product!</p>
-                  ) : (
-                    <div className="space-y-6">
-                      {product.reviews.map(review => (
-                        <div key={review.id} className="bg-white border border-outline-variant/20 rounded-2xl p-6 shadow-sm">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-label-lg font-bold text-[#1b1d0e]">{review.user_name}</h4>
-                            <span className="text-sm text-outline-variant font-body-sm">{new Date(review.created_at).toLocaleDateString()}</span>
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-3xl"
+            >
+              {activeTab === 'Description' && (
+                <div className="prose prose-lg text-on-surface/80">
+                  <p className="font-body-lg leading-relaxed whitespace-pre-wrap">
+                    {product.description}
+                  </p>
+                </div>
+              )}
+              {activeTab === 'Reviews' && (
+                <div className="space-y-16">
+                  <div>
+                    <h3 className="font-headline-md text-3xl mb-8 tracking-tight">Customer Reviews</h3>
+                    {(!product.reviews || product.reviews.length === 0) ? (
+                      <div className="bg-surface-container-low p-10 rounded-3xl text-center">
+                        <p className="text-on-surface-variant font-body-lg">No reviews yet. Be the first to share your experience!</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-6">
+                        {product.reviews.map(review => (
+                          <div key={review.id} className="bg-surface-container-lowest border border-outline-variant/30 rounded-[2rem] p-8 hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="font-label-lg font-bold text-on-surface">{review.user_name}</h4>
+                              <span className="text-sm text-on-surface-variant font-mono">{new Date(review.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center text-primary mb-6">
+                              {[1,2,3,4,5].map(star => (
+                                <Star key={star} className={`w-4 h-4 ${star <= review.rating ? 'fill-current' : 'text-outline-variant/30'}`} />
+                              ))}
+                            </div>
+                            <p className="font-body-lg text-on-surface/80 leading-relaxed">{review.comment}</p>
                           </div>
-                          <div className="flex items-center text-[#154212] mb-3">
-                            {[1,2,3,4,5].map(star => (
-                              <Star key={star} className={`w-4 h-4 ${star <= review.rating ? 'fill-current' : 'text-outline-variant/30'}`} />
-                            ))}
-                          </div>
-                          <p className="font-body-md text-[#42493e]">{review.comment}</p>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {isAuthenticated && isCustomer && (
+                    <div className="bg-surface-container-low border border-outline-variant/30 rounded-[2rem] p-10">
+                      <h3 className="font-headline-sm text-2xl mb-8 tracking-tight">Write a Review</h3>
+                      <ReviewForm slug={product.slug} onSuccess={() => window.location.reload()} />
+                    </div>
+                  )}
+                  {!isAuthenticated && (
+                    <div className="bg-surface-container-low border border-outline-variant/30 rounded-[2rem] p-10 text-center">
+                      <p className="font-body-lg text-on-surface-variant mb-6">Please log in to write a review.</p>
+                      <Link to="/auth?mode=login">
+                        <Button>Log In</Button>
+                      </Link>
                     </div>
                   )}
                 </div>
-
-                {isAuthenticated && isCustomer && (
-                  <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-8">
-                    <h3 className="font-headline-sm text-xl mb-6">Write a Review</h3>
-                    <ReviewForm slug={product.slug} onSuccess={() => window.location.reload()} />
-                  </div>
-                )}
-                {!isAuthenticated && (
-                  <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 text-center">
-                    <p className="font-body-md text-outline-variant mb-4">Please log in to write a review.</p>
-                    <Link to="/auth?mode=login" className="px-6 py-2 bg-[#154212] text-white rounded-lg font-label-md inline-block">Log In</Link>
-                  </div>
-                )}
-              </div>
-            )}
-            {(activeTab === 'Benefits' || activeTab === 'Ingredients') && (
-              <p className="text-outline-variant font-body-md italic">Information for {activeTab.toLowerCase()} is coming soon.</p>
-            )}
-          </div>
-        </div>
+              )}
+              {(activeTab === 'Benefits' || activeTab === 'Ingredients') && (
+                <div className="bg-surface-container-low p-10 rounded-3xl text-center">
+                  <p className="text-on-surface-variant font-body-lg italic">Information for {activeTab.toLowerCase()} is coming soon.</p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
 
         {/* Similar Products */}
         {relatedProducts.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="font-headline-md text-2xl text-[#1b1d0e]">Similar Products</h2>
-              <div className="flex gap-2">
-                <button className="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-white transition-colors">
-                  <ChevronRight className="w-5 h-5 rotate-180 text-on-surface" />
-                </button>
-                <button className="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-white transition-colors">
-                  <ChevronRight className="w-5 h-5 text-on-surface" />
-                </button>
-              </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="font-display-md text-3xl md:text-4xl text-on-surface tracking-tight">Similar Products</h2>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((prod) => (
-                <Link to={`/product/${prod.slug}`} key={prod.id} className="block bg-white rounded-3xl p-4 shadow-sm border border-outline-variant/10 group cursor-pointer hover:shadow-md transition-all">
-                  <div className="aspect-square rounded-2xl overflow-hidden bg-surface-container-lowest mb-4">
-                    <img src={prod.primary_image || "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600"} alt={prod.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  </div>
-                  <h3 className="font-body-md text-[#1b1d0e] mb-1 truncate">{prod.name}</h3>
-                  <div className="flex items-center gap-1 text-outline-variant text-sm font-body-sm mb-3">
-                    <Star className="w-3.5 h-3.5 text-[#1b1d0e]" /> {prod.rating} ({prod.review_count})
-                  </div>
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="font-label-md text-lg text-[#1b1d0e]">₹{prod.effective_price}</span>
-                    {!isAdmin && (
-                      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="w-10 h-10 bg-[#f5f5dc] rounded-full flex items-center justify-center hover:bg-[#154212] hover:text-white transition-colors text-[#1b1d0e]">
-                        <ShoppingCart className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </Link>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {relatedProducts.map((prod, idx) => (
+                <motion.div
+                  key={prod.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                >
+                  <Link to={`/product/${prod.slug}`} className="group relative flex flex-col h-full">
+                    <div className="relative aspect-square rounded-2xl overflow-hidden mb-5 bg-[#F5F5F7]">
+                      <img src={prod.primary_image || "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600"} alt={prod.name} className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700" />
+                    </div>
+                    
+                    <div className="flex flex-col flex-1">
+                      <h3 className="font-label-lg text-on-surface mb-1 truncate">{prod.name}</h3>
+                      <div className="flex items-center gap-1.5 text-on-surface-variant text-sm font-body-sm mb-3">
+                        <Star className="w-3.5 h-3.5 fill-current text-primary" /> {prod.rating} ({prod.review_count})
+                      </div>
+                      <div className="flex items-center justify-between mt-auto">
+                        <span className="font-headline-sm text-on-surface">₹{prod.effective_price}</span>
+                        {!isAdmin && (
+                          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary/90 transition-all shadow-sm transform group-hover:scale-105">
+                            <ShoppingCart className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

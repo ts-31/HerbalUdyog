@@ -38,7 +38,7 @@ const CategoryForm = ({ category, onClose, onSaved }: CategoryFormProps) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="bg-surface-container-lowest rounded-[2rem] shadow-sm w-full max-w-md">
         <div className="flex items-center justify-between p-6 border-b border-outline-variant/20">
           <h2 className="font-headline-md text-xl text-on-surface">
             {category ? 'Edit Category' : 'New Category'}

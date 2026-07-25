@@ -63,7 +63,7 @@ export const AdminTestimonialsTab = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {testimonials.map(testimonial => (
-            <div key={testimonial.id} className={`bg-white rounded-2xl border p-5 ${testimonial.is_approved ? 'border-outline-variant/20' : 'border-yellow-300'}`}>
+            <div key={testimonial.id} className={`bg-surface-container-lowest rounded-[2rem] border p-5 ${testimonial.is_approved ? 'border-outline-variant/20' : 'border-yellow-300'}`}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-3">
                   {testimonial.image_url ? (

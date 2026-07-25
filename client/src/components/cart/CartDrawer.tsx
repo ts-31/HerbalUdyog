@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { Button } from '../ui/Button';
 
 export const CartDrawer = () => {
   const { isCartOpen, setIsCartOpen, items, updateQuantity, removeItem, cartTotal } = useCart();
@@ -21,7 +22,7 @@ export const CartDrawer = () => {
         onClick={() => setIsCartOpen(false)}
       />
       <div className="fixed inset-y-0 right-0 w-full max-w-md bg-surface shadow-2xl z-50 flex flex-col transform transition-transform duration-300">
-        <div className="flex items-center justify-between p-6 border-b border-outline-variant/20">
+        <div className="flex items-center justify-between p-6 border-b border-outline-variant/30">
           <h2 className="font-headline-md text-xl text-on-surface flex items-center gap-2">
             <ShoppingBag className="w-5 h-5" />
             Your Cart ({items.length})
@@ -34,22 +35,22 @@ export const CartDrawer = () => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center text-on-surface-variant">
               <ShoppingBag className="w-12 h-12 mb-4 opacity-50" />
-              <p className="font-body-lg">Your cart is empty</p>
+              <p className="font-body-lg text-on-surface">Your cart is empty</p>
               <button 
                 onClick={() => setIsCartOpen(false)}
-                className="mt-6 text-primary font-medium hover:underline"
+                className="mt-6 text-primary font-medium hover:underline font-label-md"
               >
                 Continue Shopping
               </button>
             </div>
           ) : (
             items.map(item => (
-              <div key={item.id} className="flex gap-4 p-4 bg-surface-container-lowest rounded-2xl border border-outline-variant/20">
-                <div className="w-20 h-20 bg-surface-container rounded-xl overflow-hidden shrink-0">
+              <div key={item.id} className="flex gap-4 p-4 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 transition-all hover:shadow-sm">
+                <div className="w-20 h-20 bg-[#F5F5F7] rounded-xl overflow-hidden shrink-0">
                   <img 
                     src={
                       item.product.primary_image || 
@@ -57,28 +58,28 @@ export const CartDrawer = () => {
                       "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600"
                     } 
                     alt={item.product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover mix-blend-multiply"
                   />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start gap-2">
-                      <h3 className="font-medium text-on-surface text-sm truncate">{item.product.name}</h3>
-                      <button onClick={() => removeItem(item.id)} className="text-outline-variant hover:text-error transition-colors p-1">
+                      <h3 className="font-label-md text-on-surface text-sm truncate">{item.product.name}</h3>
+                      <button onClick={() => removeItem(item.id)} className="text-on-surface-variant hover:text-error transition-colors p-1">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    {item.size && <p className="text-xs text-outline-variant mt-0.5">{item.size}</p>}
+                    {item.size && <p className="text-xs text-on-surface-variant mt-0.5 font-body-sm">{item.size}</p>}
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="font-label-md text-on-surface">₹{item.product.effective_price}</span>
-                    <div className="flex items-center gap-3 bg-surface-container-low rounded-lg px-2 py-1">
-                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-on-surface-variant hover:text-primary transition-colors">
-                        <Minus className="w-3.5 h-3.5" />
+                    <span className="font-headline-sm text-sm text-on-surface">₹{item.product.effective_price}</span>
+                    <div className="flex items-center gap-3 bg-surface-container rounded-lg px-1 py-1">
+                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-6 h-6 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors rounded-md hover:bg-surface">
+                        <Minus className="w-3 h-3" />
                       </button>
-                      <span className="text-sm font-medium w-4 text-center text-on-surface">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-on-surface-variant hover:text-primary transition-colors">
-                        <Plus className="w-3.5 h-3.5" />
+                      <span className="text-sm font-label-sm w-4 text-center text-on-surface">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-6 h-6 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors rounded-md hover:bg-surface">
+                        <Plus className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -89,20 +90,21 @@ export const CartDrawer = () => {
         </div>
 
         {items.length > 0 && (
-          <div className="p-6 border-t border-outline-variant/20 bg-surface">
+          <div className="p-6 border-t border-outline-variant/30 bg-surface">
             <div className="flex justify-between items-center mb-6">
-              <span className="font-medium text-on-surface">Subtotal</span>
+              <span className="font-medium text-on-surface font-label-md">Subtotal</span>
               <span className="font-headline-md text-xl text-on-surface">₹{cartTotal.toFixed(2)}</span>
             </div>
-            <p className="text-xs text-outline-variant text-center mb-4">
+            <p className="text-xs text-on-surface-variant text-center mb-4 font-body-sm">
               Shipping and taxes calculated at checkout.
             </p>
-            <button 
+            <Button 
+              size="lg"
               onClick={handleCheckout}
-              className="w-full py-4 bg-primary text-on-primary rounded-xl font-label-md text-lg hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
+              className="w-full h-14 text-lg"
             >
               Checkout
-            </button>
+            </Button>
           </div>
         )}
       </div>

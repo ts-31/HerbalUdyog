@@ -18,29 +18,28 @@ export const MobileNav = () => {
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant/30 pb-safe z-50">
         <div className="flex justify-around items-center h-16">
-            <Link to="/" className={`flex flex-col items-center justify-center w-full h-full ${path === '/' ? 'text-primary' : 'text-on-surface-variant'}`}>
-                <div className={`w-16 h-8 rounded-full flex items-center justify-center mb-1 ${path === '/' ? 'bg-secondary-container' : ''}`}>
+            <Link to="/" className={`flex flex-col items-center justify-center w-full h-full transition-colors ${path === '/' ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'}`}>
+                <div className={`w-14 h-8 rounded-full flex items-center justify-center mb-1 transition-all ${path === '/' ? 'bg-surface-container-high' : ''}`}>
                     <Home className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] font-medium">Home</span>
             </Link>
-            <Link to="/marketplace" className={`flex flex-col items-center justify-center w-full h-full ${path === '/marketplace' ? 'text-primary' : 'text-on-surface-variant'}`}>
-                <div className={`w-16 h-8 rounded-full flex items-center justify-center mb-1 ${path === '/marketplace' ? 'bg-secondary-container' : ''}`}>
+            <Link to="/marketplace" className={`flex flex-col items-center justify-center w-full h-full transition-colors ${path === '/marketplace' ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'}`}>
+                <div className={`w-14 h-8 rounded-full flex items-center justify-center mb-1 transition-all ${path === '/marketplace' ? 'bg-surface-container-high' : ''}`}>
                     <Store className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] font-medium">Shop</span>
             </Link>
-            <Link to={accountPath} className={`flex flex-col items-center justify-center w-full h-full ${['/dashboard', '/admin'].includes(path) ? 'text-primary' : 'text-on-surface-variant'}`}>
-                <div className={`w-16 h-8 rounded-full flex items-center justify-center mb-1 ${['/dashboard', '/admin'].includes(path) ? 'bg-secondary-container' : ''}`}>
+            <Link to={accountPath} className={`flex flex-col items-center justify-center w-full h-full transition-colors ${['/dashboard', '/admin'].includes(path) ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'}`}>
+                <div className={`w-14 h-8 rounded-full flex items-center justify-center mb-1 transition-all ${['/dashboard', '/admin'].includes(path) ? 'bg-surface-container-high' : ''}`}>
                     <LayoutDashboard className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] font-medium">Account</span>
             </Link>
             {!isAdmin && (
-              <Link to="/checkout" className={`flex flex-col items-center justify-center w-full h-full ${path === '/checkout' ? 'text-primary' : 'text-on-surface-variant'}`}>
-                  <div className={`w-16 h-8 rounded-full flex items-center justify-center mb-1 relative ${path === '/checkout' ? 'bg-secondary-container' : ''}`}>
+              <Link to="/checkout" className={`flex flex-col items-center justify-center w-full h-full transition-colors ${path === '/checkout' ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'}`}>
+                  <div className={`w-14 h-8 rounded-full flex items-center justify-center mb-1 relative transition-all ${path === '/checkout' ? 'bg-surface-container-high' : ''}`}>
                       <ShoppingBasket className="w-5 h-5" />
-                      <span className="absolute top-1 right-3 w-2 h-2 rounded-full bg-error"></span>
                   </div>
                   <span className="text-[10px] font-medium">Cart</span>
               </Link>

@@ -53,7 +53,7 @@ export const AdminCustomersTab = () => {
           <p className="font-medium">No customers found</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-outline-variant/20 overflow-hidden">
+        <div className="bg-surface-container-lowest rounded-[2rem] border border-outline-variant/20 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-surface-container text-on-surface-variant border-b border-outline-variant/20">

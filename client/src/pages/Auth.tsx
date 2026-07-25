@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -52,114 +55,107 @@ export const Auth = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 px-6 py-12 bg-surface-container-lowest border border-outline-variant/30 rounded-3xl shadow-lg">
-      <div className="text-center mb-8">
-        <h1 className="font-display-lg text-3xl mb-2 text-primary">
-          {isLogin ? 'Welcome Back' : 'Create Account'}
-        </h1>
-        <p className="font-body-md text-outline-variant">
-          {isLogin ? 'Sign in to your account' : 'Join HerbalUdyog today'}
-        </p>
-      </div>
-
-      <div className="flex gap-4 mb-8 bg-surface-container p-1 rounded-xl">
-        <button
-          onClick={() => { setIsLogin(true); setError(''); }}
-          className={`flex-1 py-2 font-label-md rounded-lg transition-colors ${
-            isLogin ? 'bg-primary text-on-primary shadow' : 'text-on-surface hover:bg-surface-container-highest'
-          }`}
-        >
-          Login
-        </button>
-        <button
-          onClick={() => { setIsLogin(false); setError(''); }}
-          className={`flex-1 py-2 font-label-md rounded-lg transition-colors ${
-            !isLogin ? 'bg-primary text-on-primary shadow' : 'text-on-surface hover:bg-surface-container-highest'
-          }`}
-        >
-          Register
-        </button>
-      </div>
-
-      {error && (
-        <div className="mb-6 p-4 bg-error-container text-on-error-container rounded-xl font-body-sm">
-          {error}
+    <div className="min-h-[calc(100vh-80px)] bg-surface flex items-center justify-center py-12 px-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-[440px] bg-white border border-outline-variant/30 rounded-[2rem] shadow-sm p-8 sm:p-10"
+      >
+        <div className="text-center mb-8">
+          <h1 className="font-display-lg text-3xl sm:text-4xl mb-3 tracking-tight text-on-surface">
+            {isLogin ? 'Welcome Back' : 'Create Account'}
+          </h1>
+          <p className="font-body-md text-on-surface-variant">
+            {isLogin ? 'Sign in to access your account' : 'Join HerbalUdyog today'}
+          </p>
         </div>
-      )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {!isLogin && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block font-label-md text-on-surface mb-2" htmlFor="firstName">
-                First Name
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-outline-variant/50 bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                required={!isLogin}
-              />
-            </div>
-            <div>
-              <label className="block font-label-md text-on-surface mb-2" htmlFor="lastName">
-                Last Name
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-outline-variant/50 bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                required={!isLogin}
-              />
-            </div>
-          </div>
+        <div className="flex gap-2 mb-8 bg-surface-container-lowest p-1.5 rounded-2xl border border-outline-variant/20">
+          <button
+            onClick={() => { setIsLogin(true); setError(''); }}
+            className={`flex-1 py-2.5 font-label-md text-sm rounded-xl transition-all ${
+              isLogin ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface hover:bg-surface-container'
+            }`}
+          >
+            Login
+          </button>
+          <button
+            onClick={() => { setIsLogin(false); setError(''); }}
+            className={`flex-1 py-2.5 font-label-md text-sm rounded-xl transition-all ${
+              !isLogin ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface hover:bg-surface-container'
+            }`}
+          >
+            Register
+          </button>
+        </div>
+
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            className="mb-6 p-4 bg-error-container text-on-error-container rounded-xl font-body-sm text-sm border border-error/20"
+          >
+            {error}
+          </motion.div>
         )}
 
-        <div>
-          <label className="block font-label-md text-on-surface mb-2" htmlFor="email">
-            Email Address
-          </label>
-          <input
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <AnimatePresence mode="popLayout">
+            {!isLogin && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="grid grid-cols-2 gap-4"
+              >
+                <Input
+                  label="First Name"
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required={!isLogin}
+                />
+                <Input
+                  label="Last Name"
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required={!isLogin}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <Input
+            label="Email Address"
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-outline-variant/50 bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             required
           />
-        </div>
 
-        <div>
-          <label className="block font-label-md text-on-surface mb-2" htmlFor="password">
-            Password
-          </label>
-          <input
+          <Input
+            label="Password"
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-outline-variant/50 bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             required
             minLength={8}
           />
-        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-4 flex justify-center bg-primary text-on-primary rounded-xl font-label-md text-lg hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-md disabled:opacity-50"
-        >
-          {loading ? (
-            <div className="w-6 h-6 border-2 border-on-primary border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            isLogin ? 'Sign In' : 'Create Account'
-          )}
-        </button>
-      </form>
+          <Button
+            type="submit"
+            isLoading={loading}
+            className="w-full h-12 text-base mt-4"
+          >
+            {isLogin ? 'Sign In' : 'Create Account'}
+          </Button>
+        </form>
+      </motion.div>
     </div>
   );
 };

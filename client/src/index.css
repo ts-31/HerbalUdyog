@@ -1,7 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
+  /* Minimal, high-contrast, premium palette (Reverted to Herbal Colors) */
   --color-surface: #fbfbe2;
   --color-surface-dim: #dbdcc3;
   --color-surface-bright: #fbfbe2;
@@ -10,42 +11,37 @@
   --color-surface-container: #efefd7;
   --color-surface-container-high: #eaead1;
   --color-surface-container-highest: #e4e4cc;
+  
   --color-on-surface: #1b1d0e;
   --color-on-surface-variant: #42493e;
   --color-inverse-surface: #303221;
   --color-inverse-on-surface: #f2f2d9;
+  
   --color-outline: #72796e;
   --color-outline-variant: #c2c9bb;
-  --color-surface-tint: #3b6934;
+  
+  /* Primary interactions */
   --color-primary: #154212;
   --color-on-primary: #ffffff;
   --color-primary-container: #2d5a27;
   --color-on-primary-container: #9dd090;
-  --color-inverse-primary: #a1d494;
+  
+  /* Secondary / Accents - Retaining Herbal Identity */
   --color-secondary: #4a6549;
   --color-on-secondary: #ffffff;
   --color-secondary-container: #ccebc7;
   --color-on-secondary-container: #506b4f;
+  
   --color-tertiary: #2c3f07;
   --color-on-tertiary: #ffffff;
   --color-tertiary-container: #42571d;
   --color-on-tertiary-container: #b3cc85;
+  
   --color-error: #ba1a1a;
   --color-on-error: #ffffff;
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
-  --color-primary-fixed: #bcf0ae;
-  --color-primary-fixed-dim: #a1d494;
-  --color-on-primary-fixed: #002201;
-  --color-on-primary-fixed-variant: #23501e;
-  --color-secondary-fixed: #ccebc7;
-  --color-secondary-fixed-dim: #b0cfad;
-  --color-on-secondary-fixed: #07200b;
-  --color-on-secondary-fixed-variant: #334d33;
-  --color-tertiary-fixed: #d2eca2;
-  --color-tertiary-fixed-dim: #b6d088;
-  --color-on-tertiary-fixed: #131f00;
-  --color-on-tertiary-fixed-variant: #394d14;
+
   --color-background: #fbfbe2;
   --color-on-background: #1b1d0e;
 
@@ -53,31 +49,44 @@
   --spacing-gutter: 20px;
   --spacing-section-gap: 64px;
 
-  --font-display-lg: "Source Serif 4", serif;
-  --font-headline-lg: "Source Serif 4", serif;
-  --font-headline-md: "Source Serif 4", serif;
-  --font-body-lg: "Plus Jakarta Sans", sans-serif;
-  --font-body-md: "Plus Jakarta Sans", sans-serif;
-  --font-label-md: "Plus Jakarta Sans", sans-serif;
-  --font-label-sm: "Plus Jakarta Sans", sans-serif;
+  /* Universal Premium Sans-serif */
+  --font-display-lg: "Inter", sans-serif;
+  --font-headline-lg: "Inter", sans-serif;
+  --font-headline-md: "Inter", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-label-md: "Inter", sans-serif;
+  --font-label-sm: "Inter", sans-serif;
+  
+  /* Modern shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
 }
 
 @utility text-display-lg {
   font-size: 48px;
   line-height: 56px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
   font-weight: 700;
 }
 @utility text-headline-lg {
   font-size: 32px;
   line-height: 40px;
-  letter-spacing: 0em;
+  letter-spacing: -0.02em;
   font-weight: 600;
 }
 @utility text-headline-md {
   font-size: 24px;
   line-height: 32px;
-  letter-spacing: 0em;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+@utility text-headline-sm {
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
   font-weight: 600;
 }
 @utility text-body-lg {
@@ -92,27 +101,40 @@
   letter-spacing: 0em;
   font-weight: 400;
 }
+@utility text-label-lg {
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
 @utility text-label-md {
   font-size: 14px;
   line-height: 20px;
-  letter-spacing: 0.01em;
-  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-weight: 500;
 }
 @utility text-label-sm {
   font-size: 12px;
   line-height: 16px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0em;
   font-weight: 500;
+}
+@utility hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 body {
-  @apply bg-surface text-on-surface font-body-md;
+  @apply bg-surface text-on-surface font-body-md antialiased selection:bg-primary selection:text-white;
 }
 
 /* NProgress Custom Theme */
 #nprogress .bar {
   background: var(--color-primary) !important;
-  height: 3px !important;
+  height: 2px !important;
 }
 
 #nprogress .peg {

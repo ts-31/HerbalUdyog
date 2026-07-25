@@ -71,7 +71,7 @@ export const AdminOrdersTab = () => {
         <p className="text-sm text-on-surface-variant">{orders.length} total orders</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-outline-variant/20 overflow-hidden">
+      <div className="bg-surface-container-lowest rounded-[2rem] border border-outline-variant/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-container text-on-surface-variant border-b border-outline-variant/20">
@@ -103,7 +103,7 @@ export const AdminOrdersTab = () => {
                         className={`appearance-none pr-8 pl-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border-0 outline-none ${statusColor(order.status)}`}
                       >
                         {STATUS_OPTIONS.map(s => (
-                          <option key={s} value={s} className="bg-white text-on-surface">{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                          <option key={s} value={s} className="bg-surface-container-lowest text-on-surface">{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                         ))}
                       </select>
                       <ChevronDown className="w-3 h-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-60" />

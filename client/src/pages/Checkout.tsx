@@ -6,6 +6,7 @@ import { useOrders } from '../hooks/useOrders';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import { Button } from '../components/ui/Button';
 
 export const Checkout = () => {
   const { items, updateQuantity, removeItem, cartTotal, itemCount, clearCart } = useCart();
@@ -56,39 +57,39 @@ export const Checkout = () => {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-[1200px] mx-auto px-6 py-20 text-center">
-        <Package className="w-16 h-16 text-outline-variant mx-auto mb-6" />
-        <h1 className="font-display-lg text-4xl mb-4 text-[#1b1d0e]">Your Basket is Empty</h1>
-        <p className="font-body-md text-outline-variant mb-8 max-w-md mx-auto">
+      <div className="max-w-[1200px] mx-auto px-6 py-32 text-center">
+        <Package className="w-20 h-20 text-on-surface-variant/30 mx-auto mb-8" />
+        <h1 className="font-display-lg text-4xl md:text-5xl mb-6 tracking-tight text-on-surface">Your Basket is Empty</h1>
+        <p className="font-body-lg text-on-surface-variant mb-10 max-w-md mx-auto">
           Explore our marketplace to discover organic wellness products.
         </p>
-        <Link to="/marketplace" className="inline-block px-8 py-3 bg-[#154212] text-white rounded-xl font-label-md hover:bg-[#2d5a27] transition-colors">
-          Browse Marketplace
+        <Link to="/marketplace">
+          <Button size="lg">Browse Marketplace</Button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-12">
-      <Link to="/marketplace" className="inline-flex items-center gap-2 text-outline-variant hover:text-primary transition-colors font-label-md mb-8">
-        <ArrowLeft className="w-4 h-4" />
+    <div className="max-w-[1200px] mx-auto px-6 py-12 md:py-20">
+      <Link to="/marketplace" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors font-label-md mb-12 uppercase tracking-widest text-xs">
+        <ArrowLeft className="w-3 h-3" />
         Continue Shopping
       </Link>
       
-      <h1 className="font-display-lg text-4xl mb-10 text-[#1b1d0e]">Your Basket</h1>
+      <h1 className="font-display-lg text-4xl md:text-5xl mb-12 tracking-tight text-on-surface">Checkout</h1>
 
-      <div className="flex flex-col lg:flex-row gap-12">
+      <div className="flex flex-col lg:flex-row gap-16">
         {/* Cart Items */}
         <div className="flex-1">
-          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 mb-6 shadow-sm">
-            <h2 className="font-headline-md text-xl mb-6 border-b border-outline-variant/20 pb-4 text-[#1b1d0e]">
+          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-[2rem] p-8 md:p-10 mb-6 shadow-sm">
+            <h2 className="font-headline-md text-2xl mb-8 border-b border-outline-variant/30 pb-6 text-on-surface tracking-tight">
               Items ({itemCount})
             </h2>
-            <ul className="space-y-6">
+            <ul className="space-y-8">
               {items.map((item) => (
-                <li key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                  <div className="w-24 h-24 rounded-xl bg-surface-container overflow-hidden shrink-0 border border-outline-variant/20">
+                <li key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-6 group">
+                  <div className="w-28 h-28 rounded-2xl bg-[#F5F5F7] overflow-hidden shrink-0 border border-outline-variant/20">
                     <img 
                       src={
                         item.product.primary_image || 
@@ -96,40 +97,43 @@ export const Checkout = () => {
                         "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600"
                       } 
                       alt={item.product.name} 
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-cover mix-blend-multiply" 
                     />
                   </div>
-                  <div className="flex-1 w-full">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-headline-md text-lg text-[#1b1d0e] pr-4">{item.product.name}</h3>
-                      <p className="font-label-md text-lg font-medium text-[#1b1d0e]">
-                        ₹{(Number(item.product.effective_price) * item.quantity).toFixed(2)}
-                      </p>
-                    </div>
-                    {item.size && <p className="font-body-sm text-outline-variant text-sm mb-4">Size: {item.size}</p>}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center border border-outline-variant/30 rounded-lg bg-surface px-1 py-1">
+                  <div className="flex-1 w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-label-lg text-xl text-on-surface pr-4 leading-tight">{item.product.name}</h3>
+                      </div>
+                      {item.size && <p className="font-body-sm text-on-surface-variant text-sm mb-4">Size: {item.size}</p>}
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center border border-outline-variant/50 rounded-xl bg-surface px-1 py-1">
+                          <button 
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors rounded-lg"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="font-label-md text-sm w-10 text-center text-on-surface">{item.quantity}</span>
+                          <button 
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors rounded-lg"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                         <button 
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="w-8 h-8 flex items-center justify-center text-outline-variant hover:text-primary transition-colors"
+                          onClick={() => removeItem(item.id)}
+                          className="flex items-center gap-1.5 text-xs font-label-md uppercase tracking-widest text-on-surface-variant hover:text-error transition-colors"
                         >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="font-label-md text-sm w-8 text-center text-[#1b1d0e]">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center text-outline-variant hover:text-primary transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
+                          Remove
                         </button>
                       </div>
-                      <button 
-                        onClick={() => removeItem(item.id)}
-                        className="p-2 text-outline-variant hover:text-error transition-colors rounded-full hover:bg-error/10"
-                        aria-label="Remove item"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-headline-sm text-2xl font-medium text-on-surface">
+                        ₹{(Number(item.product.effective_price) * item.quantity).toFixed(2)}
+                      </p>
                     </div>
                   </div>
                 </li>
@@ -139,43 +143,44 @@ export const Checkout = () => {
         </div>
 
         {/* Order Summary */}
-        <div className="w-full lg:w-[400px]">
-          <div className="bg-white border border-outline-variant/30 rounded-2xl p-8 sticky top-28 shadow-sm">
-            <h2 className="font-headline-md text-2xl mb-6 text-[#1b1d0e]">Order Summary</h2>
+        <div className="w-full lg:w-[420px]">
+          <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-[2rem] p-8 md:p-10 sticky top-28 shadow-sm">
+            <h2 className="font-headline-md text-2xl mb-8 text-on-surface tracking-tight">Order Summary</h2>
             
-            <div className="space-y-4 mb-8 font-body-md">
-              <div className="flex justify-between text-outline-variant">
+            <div className="space-y-5 mb-8 font-body-md text-on-surface/80">
+              <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="text-on-surface">₹{cartTotal.toFixed(2)}</span>
+                <span className="font-medium text-on-surface">₹{cartTotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-outline-variant">
+              <div className="flex justify-between">
                 <span>Shipping</span>
-                <span className="text-on-surface">₹{shipping.toFixed(2)}</span>
+                <span className="font-medium text-on-surface">₹{shipping.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-outline-variant">
+              <div className="flex justify-between">
                 <span>Estimated Tax (5%)</span>
-                <span className="text-on-surface">₹{tax.toFixed(2)}</span>
+                <span className="font-medium text-on-surface">₹{tax.toFixed(2)}</span>
               </div>
-              <div className="pt-4 mt-4 border-t border-outline-variant/20 flex justify-between items-center">
-                <span className="font-headline-md text-lg text-[#1b1d0e]">Total</span>
-                <span className="font-headline-lg text-2xl font-bold text-[#154212]">₹{finalTotal.toFixed(2)}</span>
+              <div className="pt-6 mt-6 border-t border-outline-variant/30 flex justify-between items-center">
+                <span className="font-headline-sm text-lg text-on-surface">Total</span>
+                <span className="font-display-md text-3xl font-bold text-on-surface">₹{finalTotal.toFixed(2)}</span>
               </div>
             </div>
 
             {orderError && (
-              <div className="mb-4 p-3 bg-error/10 text-error rounded-xl font-body-sm text-sm">
+              <div className="mb-6 p-4 bg-error-container text-on-error-container rounded-xl font-body-sm text-sm border border-error/20">
                 {orderError}
               </div>
             )}
 
-            <button 
+            <Button 
+              size="lg"
               onClick={handleCheckout}
               disabled={isPlacingOrder}
-              className="w-full py-4 bg-[#154212] text-white rounded-xl font-label-md text-lg hover:bg-[#2d5a27] transition-colors shadow-lg shadow-primary/20 mb-4 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full h-14 text-lg mb-6"
             >
               {!isAuthenticated ? 'Login to Checkout' : (isPlacingOrder ? 'Processing...' : 'Proceed to Payment')}
-            </button>
-            <p className="font-body-sm text-xs text-center text-outline-variant">
+            </Button>
+            <p className="font-body-sm text-xs text-center text-on-surface-variant">
               By proceeding, you support pure herbal, high-quality, and organic wellness practices.
             </p>
           </div>

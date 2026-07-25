@@ -80,7 +80,7 @@ export const AdminBlogTab = () => {
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-2xl border border-outline-variant/20 p-6">
+        <div className="bg-surface-container-lowest rounded-[2rem] border border-outline-variant/20 p-6">
           <h3 className="font-semibold text-on-surface mb-4">Create New Article</h3>
           {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">{error}</div>}
           <form onSubmit={handleCreate} className="space-y-4">
@@ -126,7 +126,7 @@ export const AdminBlogTab = () => {
           <p className="font-medium">No blog posts yet. Create your first article above.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-outline-variant/20 overflow-hidden">
+        <div className="bg-surface-container-lowest rounded-[2rem] border border-outline-variant/20 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-surface-container text-on-surface-variant border-b border-outline-variant/20">
