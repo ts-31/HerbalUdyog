@@ -71,13 +71,13 @@ export const Checkout = () => {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-12 md:py-20">
-      <Link to="/marketplace" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors font-label-md mb-12 uppercase tracking-widest text-xs">
+    <div className="max-w-[1200px] mx-auto px-6 pt-8 pb-16">
+      <Link to="/marketplace" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors font-label-md mb-6 uppercase tracking-widest text-xs">
         <ArrowLeft className="w-3 h-3" />
         Continue Shopping
       </Link>
       
-      <h1 className="font-display-lg text-4xl md:text-5xl mb-12 tracking-tight text-on-surface">Checkout</h1>
+      <h1 className="font-display-lg text-3xl md:text-4xl mb-8 tracking-tight text-on-surface">Checkout</h1>
 
       <div className="flex flex-col lg:flex-row gap-16">
         {/* Cart Items */}

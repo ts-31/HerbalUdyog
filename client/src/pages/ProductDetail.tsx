@@ -81,12 +81,12 @@ export const ProductDetail = () => {
 
   return (
     <div className="bg-surface min-h-screen pb-32">
-      <div className="max-w-[1200px] mx-auto px-6 py-12">
+      <div className="max-w-[1200px] mx-auto px-6 pt-8 pb-16">
         {/* Breadcrumbs */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center text-xs text-on-surface-variant mb-12 space-x-2 font-label-sm uppercase tracking-widest"
+          className="flex items-center text-xs text-on-surface-variant mb-6 space-x-2 font-label-sm uppercase tracking-widest"
         >
           <Link to="/" className="hover:text-primary transition-colors">Home</Link>
           <ChevronRight className="w-3 h-3" />

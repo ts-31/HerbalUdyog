@@ -166,9 +166,9 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-surface py-12 md:py-20">
+    <div className="min-h-screen bg-surface pt-8 pb-16">
       <div className="max-w-[1200px] mx-auto px-6">
-        <h1 className="font-display-lg text-4xl text-on-surface mb-8 tracking-tight">My Account</h1>
+        <h1 className="font-display-lg text-3xl md:text-4xl text-on-surface mb-6 tracking-tight">My Account</h1>
         
         <div className="flex flex-col md:flex-row gap-8">
           {/* Sidebar */}
