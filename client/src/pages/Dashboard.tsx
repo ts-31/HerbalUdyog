@@ -8,6 +8,7 @@ import { useOrders } from '../hooks/useOrders';
 import { coreApi } from '../api/core';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { WishlistButton } from '../components/ui/WishlistButton';
 import { motion, AnimatePresence } from 'motion/react';
 
 // ─── Testimonial Submission Component ────────────────────────────────────────
@@ -423,32 +424,40 @@ export const Dashboard = () => {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {wishlistItems.map((item) => (
-                          <div key={item.id} className="relative group bg-white rounded-3xl p-4 shadow-sm hover:shadow-md transition-all border border-outline-variant/20 flex flex-col">
-                            <Link to={`/product/${item.slug}`} className="block aspect-square rounded-2xl overflow-hidden bg-[#F5F5F7] mb-4">
-                              <img 
-                                src={item.image || "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=1000"} 
-                                alt={item.name} 
-                                className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700" 
-                              />
-                            </Link>
-                            <Link to={`/product/${item.slug}`} className="block">
-                              <h3 className="font-label-lg text-on-surface mb-1 truncate" title={item.name}>{item.name}</h3>
-                              <div className="flex items-center justify-between mt-auto pt-3">
-                                <span className="font-headline-sm text-on-surface">₹{item.effective_price}</span>
+                        <AnimatePresence>
+                          {wishlistItems.map((item) => (
+                            <motion.div 
+                              layout
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8, y: -10 }}
+                              transition={{ duration: 0.3 }}
+                              key={item.product_id || item.id} 
+                              className="relative group bg-surface-container-lowest rounded-[2rem] p-4 shadow-sm hover:shadow-md transition-all border border-outline-variant/30 flex flex-col"
+                            >
+                              <Link to={`/product/${item.slug}`} className="block aspect-square rounded-2xl overflow-hidden bg-[#F5F5F7] mb-4">
+                                <img 
+                                  src={item.image || "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=1000"} 
+                                  alt={item.name} 
+                                  className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700" 
+                                />
+                              </Link>
+                              <Link to={`/product/${item.slug}`} className="block">
+                                <h3 className="font-label-lg text-on-surface mb-1 truncate" title={item.name}>{item.name}</h3>
+                                <div className="flex items-center justify-between mt-auto pt-3">
+                                  <span className="font-headline-sm text-on-surface">₹{item.effective_price}</span>
+                                </div>
+                              </Link>
+                              <div className="absolute top-6 right-6">
+                                <WishlistButton
+                                  isWishlisted={true}
+                                  onToggle={() => toggleWishlist(item.product_id || item.id)}
+                                  size="md"
+                                />
                               </div>
-                            </Link>
-                            <div className="absolute top-6 right-6">
-                              <button 
-                                onClick={() => toggleWishlist(item.product_id)}
-                                className="w-10 h-10 border border-error/20 text-error bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-error hover:text-white transition-colors shadow-sm"
-                                aria-label="Remove from wishlist"
-                              >
-                                <Heart className="w-5 h-5 fill-current" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
                       </div>
                     )}
                   </div>

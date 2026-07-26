@@ -29,7 +29,7 @@ export const BlogPostDetail = () => {
 
   if (loading) {
     return (
-      <div className="bg-surface min-h-screen pt-32 pb-20 flex justify-center">
+      <div className="bg-surface min-h-screen pt-20 pb-20 flex justify-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -37,7 +37,7 @@ export const BlogPostDetail = () => {
 
   if (error || !post) {
     return (
-      <div className="bg-surface min-h-screen pt-32 pb-20 text-center">
+      <div className="bg-surface min-h-screen pt-20 pb-20 text-center">
         <h2 className="font-display-md text-2xl text-error mb-4">Article not found</h2>
         <Link to="/blog" className="text-primary underline">Return to Blog</Link>
       </div>
@@ -45,7 +45,7 @@ export const BlogPostDetail = () => {
   }
 
   return (
-    <div className="bg-surface min-h-screen py-16">
+    <div className="bg-surface min-h-screen pt-8 pb-16">
       <div className="max-w-[800px] mx-auto px-6">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}

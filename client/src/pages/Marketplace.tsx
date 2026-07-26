@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Filter, ChevronDown, ShoppingCart, Star, Heart, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Filter, ChevronDown, ShoppingCart, Star, Heart, X, Check } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -7,7 +7,17 @@ import { useProducts } from '../hooks/useProducts';
 import { useCategories } from '../hooks/useCategories';
 import { useWishlist } from '../hooks/useWishlist';
 import { Button } from '../components/ui/Button';
-import { motion } from 'motion/react';
+import { WishlistButton } from '../components/ui/WishlistButton';
+import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'motion/react';
+
+const SORT_OPTIONS = [
+  { label: 'Featured',    value: '' },
+  { label: 'Price: Low to High', value: 'price' },
+  { label: 'Price: High to Low', value: '-price' },
+  { label: 'Newest',      value: '-created_at' },
+  { label: 'Top Rated',   value: '-rating' },
+];
 
 export const Marketplace = () => {
   const { isAdmin, isAuthenticated, isCustomer } = useAuth();
@@ -15,18 +25,33 @@ export const Marketplace = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addItem } = useCart();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
   
   const searchParam = searchParams.get('search') || '';
   const categoryParam = searchParams.get('category') || '';
   const pageParam = searchParams.get('page') || '1';
+  const orderingParam = searchParams.get('ordering') || '';
   
   const { data: productsData, loading: productsLoading, error: productsError } = useProducts({
     search: searchParam,
     category: categoryParam,
-    page: pageParam
+    page: pageParam,
+    ordering: orderingParam,
   });
 
   const { categories, loading: categoriesLoading } = useCategories();
+
+  // Close sort dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setIsSortOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleCategorySelect = (slug: string) => {
     if (slug) {
@@ -39,17 +64,28 @@ export const Marketplace = () => {
     setIsFilterOpen(false);
   };
 
+  const handleSortSelect = (value: string) => {
+    if (value) {
+      searchParams.set('ordering', value);
+    } else {
+      searchParams.delete('ordering');
+    }
+    searchParams.set('page', '1');
+    setSearchParams(searchParams);
+    setIsSortOpen(false);
+  };
+
   const handlePageChange = (newPage: number) => {
     searchParams.set('page', newPage.toString());
     setSearchParams(searchParams);
   };
 
   const getImageUrl = (product: any) => {
-    if (product.primary_image) {
-      return product.primary_image;
-    }
+    if (product.primary_image) return product.primary_image;
     return "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600";
   };
+
+  const currentSortLabel = SORT_OPTIONS.find(o => o.value === orderingParam)?.label || 'Featured';
 
   const FiltersContent = () => (
     <div>
@@ -84,15 +120,17 @@ export const Marketplace = () => {
   );
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-12 md:py-20">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
+    <div className="max-w-[1200px] mx-auto px-6 pt-8 pb-16">
+      {/* Page Header — tight, no excessive gap */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
         <div>
-          <h1 className="font-display-lg text-4xl md:text-5xl mb-4 tracking-tight">Marketplace</h1>
-          <p className="font-body-lg text-on-surface-variant max-w-2xl text-lg">
-            Browse our full selection of organic, sustainably grown products from independent farmers across the region.
+          <h1 className="font-display-lg text-3xl md:text-4xl tracking-tight text-on-surface">Marketplace</h1>
+          <p className="font-body-md text-on-surface-variant mt-1 text-sm">
+            Organic &amp; sustainably grown products from independent farmers.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Mobile filter button */}
           <Button
             variant="outline"
             onClick={() => setIsFilterOpen(true)}
@@ -101,9 +139,40 @@ export const Marketplace = () => {
           >
             Filters
           </Button>
-          <Button variant="outline" rightIcon={<ChevronDown className="w-4 h-4" />}>
-            Sort by: Featured
-          </Button>
+
+          {/* Sort Dropdown */}
+          <div className="relative" ref={sortRef}>
+            <button
+              onClick={() => setIsSortOpen(prev => !prev)}
+              className="flex items-center gap-2 px-4 py-2.5 border border-outline-variant/50 rounded-xl text-sm font-medium text-on-surface bg-surface-container-lowest hover:bg-surface-container transition-colors"
+            >
+              <span>Sort: <span className="text-primary font-semibold">{currentSortLabel}</span></span>
+              <ChevronDown className={`w-4 h-4 text-on-surface-variant transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {isSortOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  className="absolute right-0 top-full mt-2 w-52 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl shadow-lg z-50 overflow-hidden py-1"
+                >
+                  {SORT_OPTIONS.map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleSortSelect(option.value)}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-surface-container ${orderingParam === option.value ? 'text-primary font-semibold' : 'text-on-surface'}`}
+                    >
+                      {option.label}
+                      {orderingParam === option.value && <Check className="w-4 h-4 text-primary" />}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
@@ -125,7 +194,7 @@ export const Marketplace = () => {
 
       <div className="flex flex-col md:flex-row gap-12 items-start">
         {/* Sidebar Filters */}
-        <aside className="w-full md:w-64 shrink-0 hidden md:block sticky top-28">
+        <aside className="w-full md:w-56 shrink-0 hidden md:block sticky top-24">
           <FiltersContent />
         </aside>
 
@@ -190,19 +259,21 @@ export const Marketplace = () => {
                       </div>
                       
                       {/* Interactive Buttons */}
-                      <div className="absolute bottom-28 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 md:opacity-0 opacity-100">
-                        {!isAdmin && isAuthenticated && isCustomer && (
-                          <button 
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(product.id); }}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-md ${
-                              wishlisted 
-                                ? 'bg-error text-white hover:bg-error/90' 
-                                : 'bg-white text-on-surface hover:bg-surface-container border border-outline-variant/30'
-                            }`}
-                            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                          >
-                            <Heart className={`w-4 h-4 ${wishlisted ? 'fill-current' : ''}`} />
-                          </button>
+                      <div className="absolute bottom-28 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        {!isAdmin && (
+                          <WishlistButton
+                            isWishlisted={wishlisted}
+                            onToggle={(e) => { 
+                              e.preventDefault(); 
+                              e.stopPropagation(); 
+                              if (!isAuthenticated) {
+                                toast.info('Please sign in to save items to your wishlist');
+                                return;
+                              }
+                              toggleWishlist(product.id); 
+                            }}
+                            size="md"
+                          />
                         )}
                         {!isAdmin && (
                           <button 
@@ -241,3 +312,4 @@ export const Marketplace = () => {
     </div>
   );
 };
+

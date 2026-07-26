@@ -16,6 +16,7 @@ import { Contact } from './pages/Contact';
 import { OrderDetail } from './pages/OrderDetail';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { CartDrawer } from './components/cart/CartDrawer';
 import { Toaster } from 'sonner';
@@ -23,9 +24,10 @@ import { Toaster } from 'sonner';
 function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <Toaster position="top-right" richColors closeButton />
-        <Router>
+      <WishlistProvider>
+        <CartProvider>
+          <Toaster position="top-right" richColors closeButton />
+          <Router>
           <CartDrawer />
           <Routes>
             {/* Public admin login — no Layout wrapper */}
@@ -68,7 +70,8 @@ function App() {
           </Routes>
         </Router>
       </CartProvider>
-    </AuthProvider>
+    </WishlistProvider>
+  </AuthProvider>
   );
 }
 

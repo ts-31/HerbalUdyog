@@ -36,16 +36,16 @@ export const Blog = () => {
   };
 
   return (
-    <div className="bg-surface min-h-screen py-16">
+    <div className="bg-surface min-h-screen pt-8 pb-16">
       <div className="max-w-[1200px] mx-auto px-6">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-2xl mx-auto mb-16"
+          className="mb-10"
         >
-          <h1 className="font-display-lg text-4xl md:text-5xl text-on-surface mb-6 tracking-tight">Herbal Knowledge Base</h1>
-          <p className="font-body-lg text-on-surface-variant text-lg">
-            Discover the wisdom of Ayurveda, tips for natural living, and deep dives into our organic farming practices.
+          <h1 className="font-display-lg text-3xl md:text-4xl text-on-surface tracking-tight">Herbal Knowledge Base</h1>
+          <p className="font-body-md text-on-surface-variant mt-1 text-sm">
+            Ayurveda wisdom, natural living tips, and organic farming stories.
           </p>
         </motion.div>
 

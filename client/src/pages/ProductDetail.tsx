@@ -8,6 +8,7 @@ import { useProducts } from '../hooks/useProducts';
 import { useWishlist } from '../hooks/useWishlist';
 import { ReviewForm } from '../components/products/ReviewForm';
 import { Button } from '../components/ui/Button';
+import { WishlistButton } from '../components/ui/WishlistButton';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -207,9 +208,15 @@ export const ProductDetail = () => {
                   Add to Cart
                 </Button>
               )}
-              {!isAdmin && isAuthenticated && isCustomer && (
-                <button 
-                  onClick={() => {
+              {!isAdmin && (
+                <WishlistButton
+                  isWishlisted={wishlisted}
+                  size="lg"
+                  onToggle={() => {
+                    if (!isAuthenticated) {
+                      toast.info('Please sign in to save items to your wishlist');
+                      return;
+                    }
                     toggleWishlist(product.id);
                     if (wishlisted) {
                       toast.info(`Removed ${product.name} from wishlist`);
@@ -217,15 +224,7 @@ export const ProductDetail = () => {
                       toast.success(`Saved ${product.name} to wishlist`);
                     }
                   }}
-                  className={`w-14 h-14 shrink-0 border rounded-2xl flex items-center justify-center transition-all ${
-                    wishlisted 
-                      ? 'border-error text-error bg-error/10 hover:bg-error/20 scale-105' 
-                      : 'border-outline-variant text-on-surface-variant hover:text-on-surface hover:border-on-surface active:scale-95'
-                  }`}
-                  aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                >
-                  <Heart className={`w-6 h-6 transition-transform ${wishlisted ? 'fill-current scale-110' : 'hover:scale-110'}`} />
-                </button>
+                />
               )}
             </motion.div>
           </motion.div>

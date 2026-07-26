@@ -39,7 +39,7 @@ export const OrderDetail = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#fbfbe2] min-h-screen pt-32 flex justify-center">
+      <div className="bg-surface min-h-screen pt-20 pb-20 flex justify-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -47,7 +47,7 @@ export const OrderDetail = () => {
 
   if (error || !order) {
     return (
-      <div className="bg-[#fbfbe2] min-h-screen pt-32 text-center">
+      <div className="bg-surface min-h-screen pt-20 pb-20 text-center">
         <h2 className="font-display-md text-2xl text-error mb-4">{error || 'Order not found'}</h2>
         <Link to="/dashboard" className="text-primary underline">Back to Dashboard</Link>
       </div>
@@ -58,19 +58,19 @@ export const OrderDetail = () => {
   const isCancelled = order.status === 'cancelled';
 
   return (
-    <div className="bg-[#fbfbe2] min-h-screen py-12">
+    <div className="bg-surface min-h-screen pt-8 pb-16">
       <div className="max-w-[900px] mx-auto px-6">
-        <Link to="/dashboard" state={{ tab: 'orders' }} className="inline-flex items-center gap-2 text-outline-variant hover:text-primary transition-colors font-label-md mb-8">
+        <Link to="/dashboard" state={{ tab: 'orders' }} className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-label-md mb-8">
           <ChevronLeft className="w-4 h-4" />
           Back to Order History
         </Link>
 
         {/* Header */}
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-outline-variant/20 mb-6">
+        <div className="bg-surface-container-lowest rounded-[2rem] p-8 shadow-sm border border-outline-variant/20 mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="font-display-md text-3xl text-[#1b1d0e] mb-1">Order #{order.id}</h1>
-              <p className="text-sm text-outline-variant font-body-sm">
+              <h1 className="font-display-md text-3xl text-on-surface mb-1">Order #{order.id}</h1>
+              <p className="text-sm text-on-surface-variant font-body-sm">
                 Placed on {new Date(order.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
@@ -86,15 +86,15 @@ export const OrderDetail = () => {
                 {/* Line behind steps */}
                 <div className="absolute top-4 left-4 right-4 h-0.5 bg-outline-variant/20" />
                 <div
-                  className="absolute top-4 left-4 h-0.5 bg-[#154212] transition-all duration-500"
+                  className="absolute top-4 left-4 h-0.5 bg-primary transition-all duration-500"
                   style={{ width: currentStep === 0 ? '0%' : `${(currentStep / (STATUS_STEPS.length - 1)) * 100}%` }}
                 />
                 {STATUS_STEPS.map((step, i) => (
                   <div key={step} className="flex flex-col items-center gap-2 z-10">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${
                       i <= currentStep
-                        ? 'bg-[#154212] border-[#154212] text-white'
-                        : 'bg-white border-outline-variant/30 text-outline-variant'
+                        ? 'bg-primary border-primary text-on-primary'
+                        : 'bg-surface-container-lowest border-outline-variant/30 text-on-surface-variant'
                     }`}>
                       {i < currentStep ? (
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
@@ -102,7 +102,7 @@ export const OrderDetail = () => {
                         <span className="text-xs font-bold">{i + 1}</span>
                       )}
                     </div>
-                    <span className={`text-xs font-medium capitalize ${i <= currentStep ? 'text-[#154212]' : 'text-outline-variant'}`}>
+                    <span className={`text-xs font-medium capitalize ${i <= currentStep ? 'text-primary' : 'text-on-surface-variant'}`}>
                       {step}
                     </span>
                   </div>
@@ -114,8 +114,8 @@ export const OrderDetail = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Order Items */}
-          <div className="md:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-outline-variant/20">
-            <h2 className="font-headline-md text-xl text-[#1b1d0e] mb-6 flex items-center gap-2">
+          <div className="md:col-span-2 bg-surface-container-lowest rounded-[2rem] p-8 shadow-sm border border-outline-variant/20">
+            <h2 className="font-headline-md text-xl text-on-surface mb-6 flex items-center gap-2">
               <Package className="w-5 h-5" /> Items Ordered
             </h2>
             <div className="space-y-5">
@@ -130,11 +130,11 @@ export const OrderDetail = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-label-md text-on-surface truncate">{item.product_name}</h4>
-                    <p className="font-body-sm text-outline-variant">
+                    <p className="font-body-sm text-on-surface-variant">
                       Qty: {item.quantity}{item.size ? ` • Size: ${item.size}` : ''}
                     </p>
                   </div>
-                  <p className="font-label-md text-[#1b1d0e] shrink-0">₹{item.price}</p>
+                  <p className="font-label-md text-on-surface shrink-0">₹{item.price}</p>
                 </div>
               ))}
             </div>
@@ -143,8 +143,8 @@ export const OrderDetail = () => {
           {/* Summary & Shipping */}
           <div className="space-y-4">
             {/* Price Breakdown */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-outline-variant/20">
-              <h2 className="font-headline-md text-base text-[#1b1d0e] mb-4">Price Summary</h2>
+            <div className="bg-surface-container-lowest rounded-[2rem] p-6 shadow-sm border border-outline-variant/20">
+              <h2 className="font-headline-md text-base text-on-surface mb-4">Price Summary</h2>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-on-surface-variant">
                   <span>Subtotal</span>
@@ -166,16 +166,16 @@ export const OrderDetail = () => {
             </div>
 
             {/* Shipping Address */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-outline-variant/20">
-              <h2 className="font-headline-md text-base text-[#1b1d0e] mb-3 flex items-center gap-2">
+            <div className="bg-surface-container-lowest rounded-[2rem] p-6 shadow-sm border border-outline-variant/20">
+              <h2 className="font-headline-md text-base text-on-surface mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4" /> Shipping Address
               </h2>
               <p className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-line">{order.shipping_address}</p>
             </div>
 
             {/* Timestamps */}
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-outline-variant/20">
-              <h2 className="font-headline-md text-base text-[#1b1d0e] mb-3 flex items-center gap-2">
+            <div className="bg-surface-container-lowest rounded-[2rem] p-6 shadow-sm border border-outline-variant/20">
+              <h2 className="font-headline-md text-base text-on-surface mb-3 flex items-center gap-2">
                 <Clock className="w-4 h-4" /> Timeline
               </h2>
               <div className="space-y-2 text-sm text-on-surface-variant">
