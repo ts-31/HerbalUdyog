@@ -13,6 +13,7 @@ import { GenericPage } from './pages/GenericPage';
 import { Blog } from './pages/Blog';
 import { BlogPostDetail } from './pages/BlogPostDetail';
 import { Contact } from './pages/Contact';
+import { About } from './pages/About';
 import { OrderDetail } from './pages/OrderDetail';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -50,6 +51,7 @@ function App() {
               <Route path="blog" element={<Blog />} />
               <Route path="blog/:slug" element={<BlogPostDetail />} />
               <Route path="contact" element={<Contact />} />
+              <Route path="about" element={<About />} />
               
               <Route path="support" element={<GenericPage title="Contact Support" />} />
               

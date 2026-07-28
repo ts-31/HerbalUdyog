@@ -30,7 +30,7 @@ export const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <Link to="/marketplace">
-              <Button size="lg" className="w-full sm:w-auto bg-white text-black hover:bg-white/90">
+              <Button size="lg" className="w-full sm:w-auto !bg-white !text-black hover:!bg-white/90 shadow-sm">
                 Shop Wellness
               </Button>
             </Link>
