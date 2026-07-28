@@ -49,11 +49,7 @@ export const Blog = () => {
           </p>
         </motion.div>
 
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : posts.length === 0 ? (
+        {loading ? null : posts.length === 0 ? (
           <div className="text-center py-20 text-on-surface-variant font-body-md bg-surface-container-low rounded-3xl border border-outline-variant/30">
             No articles found. Check back later!
           </div>

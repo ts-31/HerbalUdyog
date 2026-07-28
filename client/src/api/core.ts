@@ -37,13 +37,13 @@ export interface Testimonial {
 
 export const coreApi = {
   getBlogPosts: async () => {
-    const res = await apiClient.get('/api/core/blog/');
+    const res = await apiClient.get('/api/core/blog/', undefined, false, true);
     if (!res.ok) throw new Error('Failed to fetch blog posts');
     return res.json() as Promise<BlogPost[]>;
   },
 
   getBlogPost: async (slug: string) => {
-    const res = await apiClient.get(`/api/core/blog/${slug}/`);
+    const res = await apiClient.get(`/api/core/blog/${slug}/`, undefined, false, true);
     if (!res.ok) throw new Error('Failed to fetch blog post');
     return res.json() as Promise<BlogPost>;
   },
@@ -55,7 +55,7 @@ export const coreApi = {
   },
 
   getTestimonials: async () => {
-    const res = await apiClient.get('/api/core/testimonials/');
+    const res = await apiClient.get('/api/core/testimonials/', undefined, true, true);
     if (!res.ok) throw new Error('Failed to fetch testimonials');
     return res.json() as Promise<Testimonial[]>;
   },

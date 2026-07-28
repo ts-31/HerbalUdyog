@@ -28,11 +28,7 @@ export const BlogPostDetail = () => {
   }, [slug]);
 
   if (loading) {
-    return (
-      <div className="bg-surface min-h-screen pt-20 pb-20 flex justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return null;
   }
 
   if (error || !post) {

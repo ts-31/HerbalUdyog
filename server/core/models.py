@@ -1,13 +1,12 @@
 from django.db import models
 from django.utils.text import slugify
-from cloudinary.models import CloudinaryField
 
 class BlogPost(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True)
     excerpt = models.TextField()
     content = models.TextField()
-    image = CloudinaryField('image', blank=True, null=True)
+    image = models.CharField(max_length=500, blank=True, null=True)
     author_name = models.CharField(max_length=255, default='HerbalUdyog Team')
     is_published = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -42,7 +41,7 @@ class Testimonial(models.Model):
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=255, blank=True, null=True)
     content = models.TextField()
-    image = CloudinaryField('image', blank=True, null=True)
+    image = models.CharField(max_length=500, blank=True, null=True)
     rating = models.PositiveIntegerField(default=5)
     is_approved = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

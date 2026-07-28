@@ -10,7 +10,6 @@ const SILENT_URLS = [
   '/api/users/wishlist/',
   '/api/users/token/refresh/',
   '/api/core/testimonials/',
-  '/api/core/blog/',
 ];
 
 const isSilentUrl = (url: string) => SILENT_URLS.some(s => url.startsWith(s));
@@ -18,9 +17,14 @@ const isSilentUrl = (url: string) => SILENT_URLS.some(s => url.startsWith(s));
 class ApiClient {
   private timer: ReturnType<typeof setTimeout> | null = null;
 
-  private async fetchWithAuth(url: string, options: RequestInit = {}, silent = false) {
+  private async fetchWithAuth(
+    url: string,
+    options: RequestInit = {},
+    silent = false,
+    skipAuth = false,
+  ) {
     const headers = new Headers(options.headers);
-    const token = localStorage.getItem('access_token');
+    const token = skipAuth ? null : localStorage.getItem('access_token');
     
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
@@ -85,8 +89,8 @@ class ApiClient {
     window.dispatchEvent(new Event('auth-logout'));
   }
 
-  async get(url: string, options?: RequestInit, silent = false) {
-    return this.fetchWithAuth(url, { ...options, method: 'GET' }, silent);
+  async get(url: string, options?: RequestInit, silent = false, skipAuth = false) {
+    return this.fetchWithAuth(url, { ...options, method: 'GET' }, silent, skipAuth);
   }
 
   async post(url: string, body?: any, options?: RequestInit, silent = false) {
