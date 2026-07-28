@@ -37,7 +37,7 @@ export const Navbar = () => {
                   <Link to="/marketplace" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors">Products</Link>
                   
                   {isAuthenticated && !isAdmin && (
-                      <Link to="/dashboard" state={{ tab: 'orders' }} className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors">Orders</Link>
+                      <Link to="/dashboard/orders" className="font-label-md text-sm text-on-surface-variant hover:text-primary transition-colors">Orders</Link>
                   )}
 
                   {isAuthenticated && isAdmin && (
@@ -66,7 +66,7 @@ export const Navbar = () => {
                   {!isAdmin && (
                     <>
                       {isAuthenticated && (
-                        <Link to="/dashboard" className="hidden sm:flex w-10 h-10 items-center justify-center rounded-full hover:bg-surface-container text-on-surface transition-colors relative" aria-label="Wishlist" state={{ tab: 'wishlist' }}>
+                        <Link to="/dashboard/wishlist" className="hidden sm:flex w-10 h-10 items-center justify-center rounded-full hover:bg-surface-container text-on-surface transition-colors relative" aria-label="Wishlist">
                             <Heart className="w-5 h-5" />
                         </Link>
                       )}
@@ -87,7 +87,7 @@ export const Navbar = () => {
                   
                   {isAuthenticated ? (
                     <>
-                      <Link to="/dashboard" className="hidden sm:flex w-10 h-10 items-center justify-center rounded-full hover:bg-surface-container text-on-surface transition-colors relative" aria-label="Profile">
+                      <Link to="/dashboard/profile" className="hidden sm:flex w-10 h-10 items-center justify-center rounded-full hover:bg-surface-container text-on-surface transition-colors relative" aria-label="Profile">
                           <User className="w-5 h-5" />
                       </Link>
                       <button onClick={handleLogout} className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full hover:bg-error-container text-error transition-colors" aria-label="Logout">
@@ -132,9 +132,9 @@ export const Navbar = () => {
                     <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="font-label-lg text-lg text-on-surface hover:text-primary block">Admin Dashboard</Link>
                   ) : (
                     <>
-                      <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="font-label-lg text-lg text-on-surface hover:text-primary block">My Account</Link>
-                      <Link to="/dashboard" state={{ tab: 'orders' }} onClick={() => setIsMobileMenuOpen(false)} className="font-label-lg text-lg text-on-surface hover:text-primary block">Order History</Link>
-                      <Link to="/dashboard" state={{ tab: 'wishlist' }} onClick={() => setIsMobileMenuOpen(false)} className="font-label-lg text-lg text-on-surface hover:text-primary block">Wishlist</Link>
+                      <Link to="/dashboard/profile" onClick={() => setIsMobileMenuOpen(false)} className="font-label-lg text-lg text-on-surface hover:text-primary block">My Account</Link>
+                      <Link to="/dashboard/orders" onClick={() => setIsMobileMenuOpen(false)} className="font-label-lg text-lg text-on-surface hover:text-primary block">Order History</Link>
+                      <Link to="/dashboard/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="font-label-lg text-lg text-on-surface hover:text-primary block">Wishlist</Link>
                     </>
                   )}
                   <button onClick={handleLogout} className="font-label-lg text-lg text-error hover:text-error/80 flex items-center gap-2">

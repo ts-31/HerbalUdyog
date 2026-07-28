@@ -45,7 +45,7 @@ export const Checkout = () => {
       await placeOrder(payload as any);
       toast.success('Order placed successfully! Thank you for shopping with HerbalUdyog.');
       clearCart();
-      navigate('/dashboard', { state: { tab: 'orders' } });
+      navigate('/dashboard/orders');
     } catch (err: any) {
       const errMsg = err.message || 'Failed to place order. Please try again.';
       setOrderError(errMsg);

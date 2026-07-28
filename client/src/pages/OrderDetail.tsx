@@ -49,7 +49,7 @@ export const OrderDetail = () => {
     return (
       <div className="bg-surface min-h-screen pt-20 pb-20 text-center">
         <h2 className="font-display-md text-2xl text-error mb-4">{error || 'Order not found'}</h2>
-        <Link to="/dashboard" className="text-primary underline">Back to Dashboard</Link>
+        <Link to="/dashboard/orders" className="text-primary underline">Back to Dashboard</Link>
       </div>
     );
   }
@@ -60,7 +60,7 @@ export const OrderDetail = () => {
   return (
     <div className="bg-surface min-h-screen pt-8 pb-16">
       <div className="max-w-[900px] mx-auto px-6">
-        <Link to="/dashboard" state={{ tab: 'orders' }} className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-label-md mb-8">
+        <Link to="/dashboard/orders" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-label-md mb-8">
           <ChevronLeft className="w-4 h-4" />
           Back to Order History
         </Link>

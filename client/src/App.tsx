@@ -1,9 +1,16 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { Home } from './pages/Home';
 import { Marketplace } from './pages/Marketplace';
-import { Dashboard } from './pages/Dashboard';
+import {
+  DashboardLayout,
+  DashboardProfile,
+  DashboardOrders,
+  DashboardWishlist,
+  DashboardTestimonials,
+  DashboardSettings,
+} from './pages/Dashboard';
 import { Checkout } from './pages/Checkout';
 import { Auth } from './pages/Auth';
 import { AdminLogin } from './pages/AdminLogin';
@@ -58,9 +65,16 @@ function App() {
               {/* Protected Customer Routes */}
               <Route path="dashboard" element={
                 <ProtectedRoute requiredRole="customer">
-                  <Dashboard />
+                  <DashboardLayout />
                 </ProtectedRoute>
-              } />
+              }>
+                <Route index element={<Navigate to="profile" replace />} />
+                <Route path="profile" element={<DashboardProfile />} />
+                <Route path="orders" element={<DashboardOrders />} />
+                <Route path="wishlist" element={<DashboardWishlist />} />
+                <Route path="testimonials" element={<DashboardTestimonials />} />
+                <Route path="settings" element={<DashboardSettings />} />
+              </Route>
               <Route path="orders/:id" element={
                 <ProtectedRoute requiredRole="customer">
                   <OrderDetail />

@@ -15,7 +15,7 @@ export const MobileNav = () => {
     : '/auth';
 
   const accountActive = isAuthenticated
-    ? ['/dashboard', '/admin'].includes(path)
+    ? path.startsWith('/dashboard') || path.startsWith('/admin')
     : path === '/auth';
 
   return (
