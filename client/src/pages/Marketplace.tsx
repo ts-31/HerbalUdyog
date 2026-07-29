@@ -81,8 +81,7 @@ export const Marketplace = () => {
   };
 
   const getImageUrl = (product: any) => {
-    if (product.primary_image) return product.primary_image;
-    return "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600";
+    return product.primary_image;
   };
 
   const currentSortLabel = SORT_OPTIONS.find(o => o.value === orderingParam)?.label || 'Featured';

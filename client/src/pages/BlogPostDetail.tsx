@@ -84,7 +84,7 @@ export const BlogPostDetail = () => {
           className="aspect-[16/9] w-full bg-surface-container-lowest rounded-[2rem] overflow-hidden mb-12 shadow-sm border border-outline-variant/30"
         >
           <img 
-            src={post.image_url || 'https://images.unsplash.com/photo-1542841791-1925b02a2bf5?auto=format&fit=crop&q=80&w=1200'} 
+            src={post.image_url}
             alt={post.title}
             className="w-full h-full object-cover mix-blend-multiply hover:scale-105 transition-transform duration-700"
           />

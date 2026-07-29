@@ -66,6 +66,7 @@ class UserProfile(models.Model):
     state = models.CharField(max_length=100, blank=True)
     postal_code = models.CharField(max_length=20, blank=True)
     country = models.CharField(max_length=100, blank=True, default='India')
+    profile_image = models.ImageField(max_length=500, blank=True, null=True, upload_to='profile_images/')
 
     def __str__(self):
         return f"{self.user.email}'s Profile"

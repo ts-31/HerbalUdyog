@@ -25,11 +25,11 @@ export interface ContactInquiry {
 
 export interface Testimonial {
   id: number;
+  user: number;
+  user_email: string;
+  user_profile_image_url?: string;
   name: string;
-  role: string;
   content: string;
-  image?: string;
-  image_url?: string;
   rating: number;
   is_approved: boolean;
   created_at: string;
@@ -60,7 +60,7 @@ export const coreApi = {
     return res.json() as Promise<Testimonial[]>;
   },
 
-  submitTestimonial: async (data: { name: string; role?: string; content: string; rating: number }) => {
+  submitTestimonial: async (data: { name: string; content: string; rating: number }) => {
     const res = await apiClient.post('/api/core/testimonials/', data);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));

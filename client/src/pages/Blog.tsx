@@ -68,7 +68,7 @@ export const Blog = () => {
               >
                 <div className="aspect-[4/3] bg-surface-container overflow-hidden">
                   <img 
-                    src={post.image_url || 'https://images.unsplash.com/photo-1542841791-1925b02a2bf5?auto=format&fit=crop&q=80&w=600'} 
+                    src={post.image_url}
                     alt={post.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 mix-blend-multiply"
                   />

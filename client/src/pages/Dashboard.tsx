@@ -37,34 +37,64 @@ const chipLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 const TestimonialTab = () => {
   const { user } = useAuth();
-  const [form, setForm] = useState({ name: '', role: '', content: '', rating: 5 });
+  const [form, setForm] = useState({ name: '', content: '', rating: 5 });
   const [hoveredRating, setHoveredRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasExistingTestimonial, setHasExistingTestimonial] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setForm(prev => ({
-        ...prev,
-        name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email.split('@')[0],
-      }));
+      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email.split('@')[0];
+      setForm(prev => ({ ...prev, name: fullName }));
     }
   }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (form.content.length < 50) {
+      setError('Testimonial must be at least 50 characters');
+      return;
+    }
+    if (form.content.length > 500) {
+      setError('Testimonial must not exceed 500 characters');
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError(null);
-      await coreApi.submitTestimonial(form);
+      await coreApi.submitTestimonial({
+        name: form.name,
+        content: form.content,
+        rating: form.rating
+      });
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Failed to submit testimonial');
+      if (err.message?.includes('already submitted')) {
+        setHasExistingTestimonial(true);
+        setError('You have already submitted a testimonial.');
+      } else {
+        setError(err.message || 'Failed to submit testimonial');
+      }
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (hasExistingTestimonial) {
+    return (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 bg-primary-container text-on-primary-container rounded-full flex items-center justify-center mx-auto mb-6">
+          <Star className="w-7 h-7 fill-current" />
+        </div>
+        <h3 className="font-headline-md text-2xl text-on-surface mb-3">Testimonial Already Submitted</h3>
+        <p className="font-body-md text-on-surface-variant">You have already submitted a testimonial. Thank you for your feedback!</p>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -84,22 +114,16 @@ const TestimonialTab = () => {
       <p className="font-body-md text-on-surface-variant mb-8">Your feedback helps others make informed wellness choices. Approved testimonials appear on our homepage.</p>
       {error && <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-xl text-sm">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Your Name"
-            required
+        <div>
+          <label className="block font-label-md mb-2 text-on-surface">Your Name</label>
+          <input
             type="text"
             value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })}
-          />
-          <Input
-            label="Role / Location (optional)"
-            type="text"
-            placeholder="e.g. Wellness Enthusiast, Mumbai"
-            value={form.role}
-            onChange={e => setForm({ ...form, role: e.target.value })}
+            readOnly
+            className="w-full px-4 py-3 border border-outline-variant/50 rounded-xl bg-surface-container-low text-on-surface-variant font-body-md"
           />
         </div>
+
         <div>
           <label className="block font-label-md mb-2 text-on-surface">Rating</label>
           <div className="flex gap-1">
@@ -114,12 +138,27 @@ const TestimonialTab = () => {
             ))}
           </div>
         </div>
+        
         <div>
           <label className="block font-label-md mb-2 text-on-surface">Your Testimonial</label>
-          <textarea required rows={5} value={form.content} onChange={e => setForm({ ...form, content: e.target.value })}
-            placeholder="Tell us about your experience with our products and brand..."
-            className="w-full px-4 py-3 border border-outline-variant/50 rounded-xl bg-surface focus:ring-2 focus:ring-primary outline-none font-body-md resize-none" />
+          <textarea 
+            required 
+            rows={5} 
+            value={form.content} 
+            onChange={e => setForm({ ...form, content: e.target.value })}
+            placeholder="Tell us about your experience with our products and brand (minimum 50 characters, maximum 500 characters)..."
+            className="w-full px-4 py-3 border border-outline-variant/50 rounded-xl bg-surface focus:ring-2 focus:ring-primary outline-none font-body-md resize-none"
+            minLength={50}
+            maxLength={500}
+          />
+          <div className="flex justify-between mt-1">
+            <span className="text-xs text-on-surface-variant">Minimum 50 characters</span>
+            <span className={`text-xs ${form.content.length > 500 ? 'text-error' : 'text-on-surface-variant'}`}>
+              {form.content.length}/500
+            </span>
+          </div>
         </div>
+        
         <Button type="submit" isLoading={submitting}>
           Submit Testimonial
         </Button>
@@ -235,8 +274,11 @@ export const DashboardProfile = () => {
     address_line1: '',
     city: '',
     state: '',
-    postal_code: ''
+    postal_code: '',
+    profile_image: null as File | null
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleEditClick = () => {
     if (profile) {
@@ -247,19 +289,40 @@ export const DashboardProfile = () => {
         address_line1: profile.address_line1 || '',
         city: profile.city || '',
         state: profile.state || '',
-        postal_code: profile.postal_code || ''
+        postal_code: profile.postal_code || '',
+        profile_image: null
       });
+      setImagePreview(profile.profile_image_url || null);
       setIsEditing(true);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setError('Image size must be less than 2MB');
+        return;
+      }
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+        setError('Only JPG, PNG, and WEBP images are allowed');
+        return;
+      }
+      setEditForm(prev => ({ ...prev, profile_image: file }));
+      setImagePreview(URL.createObjectURL(file));
+      setError(null);
     }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setError(null);
       await updateProfile(editForm);
       setIsEditing(false);
     } catch (err) {
       console.error('Failed to update profile', err);
+      setError('Failed to update profile. Please try again.');
     }
   };
 
@@ -280,6 +343,28 @@ export const DashboardProfile = () => {
 
       {isEditing ? (
         <form onSubmit={handleSaveProfile} className="space-y-6">
+          {error && <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-xl text-sm">{error}</div>}
+          
+          <div className="flex items-center gap-6 mb-6">
+            {imagePreview ? (
+              <img src={imagePreview} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-outline-variant/30" />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-surface-container-low border-4 border-outline-variant/30 flex items-center justify-center text-on-surface-variant text-2xl font-bold">
+                {profile?.first_name?.[0] || profile?.email?.[0]?.toUpperCase()}
+              </div>
+            )}
+            <div>
+              <label className="block font-label-md mb-2 text-on-surface">Profile Image</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                onChange={handleImageChange}
+                className="text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-container file:text-on-primary-container hover:file:bg-primary-container/80"
+              />
+              <p className="text-xs text-on-surface-variant mt-1">Max 2MB, JPG/PNG/WEBP</p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
               label="First Name"
@@ -337,9 +422,18 @@ export const DashboardProfile = () => {
         </form>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div>
-            <p className="font-label-md text-xs uppercase tracking-widest text-on-surface-variant mb-2">Email</p>
-            <p className="font-body-lg text-on-surface">{profile?.email}</p>
+          <div className="flex items-center gap-4">
+            {profile?.profile_image_url ? (
+              <img src={profile.profile_image_url} alt="Profile" className="w-16 h-16 rounded-full object-cover border-2 border-outline-variant/30" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-surface-container-low border-2 border-outline-variant/30 flex items-center justify-center text-on-surface-variant text-xl font-bold">
+                {profile?.first_name?.[0] || profile?.email?.[0]?.toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="font-label-md text-xs uppercase tracking-widest text-on-surface-variant mb-2">Email</p>
+              <p className="font-body-lg text-on-surface">{profile?.email}</p>
+            </div>
           </div>
           <div>
             <p className="font-label-md text-xs uppercase tracking-widest text-on-surface-variant mb-2">Phone</p>
@@ -420,7 +514,7 @@ export const DashboardOrders = () => {
                   <div key={item.id} className="flex items-center gap-4 sm:gap-6">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 bg-surface-container-lowest rounded-2xl overflow-hidden shrink-0 border border-outline-variant/20 shadow-sm">
                       <img
-                        src={item.product_image || "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=200"}
+                        src={item.product_image}
                         alt={item.product_name}
                         className="w-full h-full object-cover mix-blend-multiply hover:scale-105 transition-transform duration-500"
                       />
@@ -489,7 +583,7 @@ export const DashboardWishlist = () => {
               >
                 <Link to={`/product/${item.slug}`} className="block aspect-square rounded-2xl overflow-hidden bg-[#F5F5F7] mb-4">
                   <img
-                    src={item.image || "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=1000"}
+                    src={item.image}
                     alt={item.name}
                     className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700"
                   />

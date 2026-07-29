@@ -93,8 +93,7 @@ export const Checkout = () => {
                     <img 
                       src={
                         item.product.primary_image || 
-                        (item.product.images?.length > 0 ? (item.product.images.find((i: any) => i.is_primary)?.image_url || item.product.images[0].image_url) : null) || 
-                        "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600"
+                        (item.product.images?.length > 0 ? (item.product.images.find((i: any) => i.is_primary)?.image_url || item.product.images[0].image_url) : null)
                       } 
                       alt={item.product.name} 
                       className="w-full h-full object-cover mix-blend-multiply" 

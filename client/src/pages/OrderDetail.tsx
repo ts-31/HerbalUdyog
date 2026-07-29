@@ -123,7 +123,7 @@ export const OrderDetail = () => {
                 <div key={item.id} className="flex items-center gap-4 pb-5 border-b border-outline-variant/10 last:border-0 last:pb-0">
                   <div className="w-16 h-16 bg-surface-container rounded-xl overflow-hidden shrink-0 border border-outline-variant/20">
                     <img
-                      src="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=200"
+                      src={item.product_image}
                       alt={item.product_name}
                       className="w-full h-full object-cover"
                     />

@@ -46,15 +46,6 @@ class ProductImageSerializer(serializers.ModelSerializer):
                     if request:
                         return request.build_absolute_uri(img_str)
                     return f"http://127.0.0.1:8000{img_str}"
-                
-                # High-quality fallback placeholders for missing local files in production
-                placeholders = [
-                    "https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?auto=format&fit=crop&q=80&w=600",
-                    "https://images.unsplash.com/photo-1576092762791-dd9e2220abd1?auto=format&fit=crop&q=80&w=600",
-                    "https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?auto=format&fit=crop&q=80&w=600",
-                    "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=600"
-                ]
-                return placeholders[obj.id % len(placeholders)]
             url, _ = cloudinary_url(img_str, secure=True)
             return url
         return None

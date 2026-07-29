@@ -1,5 +1,6 @@
 import os
 import shutil
+import requests
 from decimal import Decimal
 import random
 from django.core.management.base import BaseCommand
@@ -9,6 +10,7 @@ from products.models import Category, Product, ProductImage, Review
 from core.models import BlogPost, ContactInquiry, Testimonial
 from users.models import UserProfile, Wishlist
 from orders.models import Order, OrderItem
+import cloudinary.uploader
 
 User = get_user_model()
 
@@ -63,6 +65,30 @@ CATEGORY_TO_SUPP = {
 
 class Command(BaseCommand):
     help = 'Seeds categories, products, customer profiles, reviews, blogs, testimonials, inquiries, wishlists, and orders.'
+
+    def _upload_to_cloudinary(self, file_or_url, folder, public_id=None):
+        """Upload a file or URL to Cloudinary and return the public_id."""
+        try:
+            if isinstance(file_or_url, str) and (file_or_url.startswith('http://') or file_or_url.startswith('https://')):
+                # Upload from URL
+                upload_result = cloudinary.uploader.upload(
+                    file_or_url,
+                    folder=folder,
+                    public_id=public_id,
+                    overwrite=True
+                )
+            else:
+                # Upload from local file
+                upload_result = cloudinary.uploader.upload(
+                    file_or_url,
+                    folder=folder,
+                    public_id=public_id,
+                    overwrite=True
+                )
+            return upload_result['public_id']
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'  -> Cloudinary upload failed: {str(e)}'))
+            return None
 
     def _copy_seed_assets(self):
         for folder in ('products', 'blogs', 'testimonials'):
@@ -171,17 +197,28 @@ class Command(BaseCommand):
                 images_to_upload = [(p_data['img'], True)]
                 supp_imgs = CATEGORY_TO_SUPP.get(p_data['category'], SUPPLEMENT_IMAGES)
                 for filename in supp_imgs:
-                    images_to_upload.append((f"/media/products/{filename}", False))
+                    images_to_upload.append((SEED_ASSETS / 'products' / filename, False))
 
                 for idx, (img_src, is_primary) in enumerate(images_to_upload):
                     try:
-                        ProductImage.objects.create(
-                            product=product,
-                            image=img_src,
-                            is_primary=is_primary,
-                            order=idx,
-                            alt_text=f"{product.name} image {idx + 1}"
+                        # Upload to Cloudinary
+                        public_id = self._upload_to_cloudinary(
+                            img_src,
+                            folder=f'products/{product.slug}',
+                            public_id=f'{product.slug}_image_{idx + 1}' if is_primary else f'{product.slug}_supp_{idx}'
                         )
+                        
+                        if public_id:
+                            ProductImage.objects.create(
+                                product=product,
+                                image=public_id,
+                                is_primary=is_primary,
+                                order=idx,
+                                alt_text=f"{product.name} image {idx + 1}"
+                            )
+                            self.stdout.write(self.style.SUCCESS(f'  -> Uploaded image {idx+1} to Cloudinary'))
+                        else:
+                            self.stdout.write(self.style.ERROR(f'  -> Failed to upload image {idx+1}'))
                     except Exception as e:
                         self.stdout.write(self.style.ERROR(f'  -> Failed to attach image {idx+1}: {str(e)}'))
 
@@ -219,41 +256,49 @@ class Command(BaseCommand):
                 "title": "The Power of Ashwagandha Root",
                 "excerpt": "Discover how Ashwagandha (Withania somnifera) works as an adaptogen to regulate cortisol levels and restore vital mental clarity.",
                 "content": "Ashwagandha has been a cornerstone of Ayurvedic medicine for over 3,000 years. Classified as a Rasayana (rejuvenator), it supports overall vitality. In today's fast-paced environment, chronic stress elevates cortisol levels, triggering anxiety, brain fog, and fatigue. Modern scientific research confirms that Ashwagandha root extract aids in lowering blood pressure, regulating body stress responses, and improving restful sleep cycles. Read on for a complete guide on how to integrate Ashwagandha root powder safely into your morning smoothies or warm milk routines.",
-                "image": "/media/blogs/ashwagandha_root.jpg"
+                "image_file": "ashwagandha_root.jpg"
             },
             {
                 "title": "5 Ways to Boost Immunity",
                 "excerpt": "Monsoons bring refreshing rains but also seasonal bugs. Stay healthy naturally with these simple Ayurvedic guidelines.",
                 "content": "As seasons shift, our body's digestive fire (Agni) fluctuates, making us susceptible to viruses and infections. Ayurveda emphasizes preventive health care. Start by sipping warm Tulsi and ginger tea throughout the day to boost metabolism and clear respiratory pathways. Introduce organic Turmeric capsules rich in Curcumin to lower inflammatory markers. Incorporate daily breathing exercises (Pranayama) to expand lung capacity and detoxify blood naturally. Explore our organic wellness catalog for pure extracts prepared with traditional copper-pot methods.",
-                "image": "/media/blogs/immunity_boost.jpg"
+                "image_file": "immunity_boost.jpg"
             },
             {
                 "title": "Understanding Curcumin",
                 "excerpt": "Turmeric is more than a kitchen spice. Learn how Curcumin acts as a powerful anti-inflammatory and cellular antioxidant.",
                 "content": "Curcumin is the yellow pigment found in turmeric roots that gives this wonder spice its potent medicinal properties. While raw turmeric contains 3% curcumin by weight, concentrated organic capsules provide direct cellular bio-availability. To enhance curcumin absorption, Ayurveda recommends consuming it alongside black pepper (piperine) and healthy fats like pure A2 Ghee. Regular intake helps lubricate joint tissues, promotes clear skin, and supports heart health by property protecting arterial lining from oxidative stress.",
-                "image": "/media/blogs/curcumin_turmeric.jpg"
+                "image_file": "curcumin_turmeric.jpg"
             },
             {
                 "title": "Neem for Clear Skin",
                 "excerpt": "Neem (Azadirachta indica) has been used for centuries in Ayurveda to purify blood and calm inflammatory skin conditions.",
                 "content": "Neem is often called the village pharmacy of India for good reason. Its bitter leaves and oil are rich in nimbin and azadirachtin compounds that help cleanse the blood and support clear, balanced skin. Traditional Ayurvedic routines recommend neem leaf paste for occasional breakouts, while diluted neem face washes gently remove excess oil without stripping the skin barrier. Pair topical care with internal support — warm neem tea in moderation or certified herbal formulations — and keep meals light when Kapha is elevated. Consistency, not harsh scrubbing, is what brings lasting glow.",
-                "image": "/media/blogs/neem_clear_skin.jpg"
+                "image_file": "neem_clear_skin.jpg"
             },
             {
                 "title": "Why Triphala Still Matters",
                 "excerpt": "The classic three-fruit formula remains one of Ayurveda's most trusted daily digestive tonics.",
                 "content": "Triphala combines Amalaki, Haritaki, and Bibhitaki — three fruits that together balance Vata, Pitta, and Kapha while gently supporting elimination and gut resilience. Unlike harsh laxatives, Triphala works as a Rasayana: it nourishes while it cleanses. Modern herbalists often recommend taking Triphala powder with warm water at night, or capsules after meals, depending on constitution. Look for organically grown, traditionally processed blends without fillers. Over weeks of steady use, many people notice more comfortable digestion, clearer skin, and steadier energy — reminders that gut health sits at the center of Ayurvedic wellbeing.",
-                "image": "/media/blogs/triphala_matters.jpg"
+                "image_file": "triphala_matters.jpg"
             },
             {
                 "title": "Morning Rituals with Tulsi Tea",
                 "excerpt": "Start the day with holy basil — a simple cup that steadies the mind and opens the breath.",
                 "content": "Tulsi, or holy basil, is revered in Ayurveda as an adaptogenic herb that supports calm focus and respiratory ease. A morning cup of Tulsi green tea is an easy ritual: steep fresh or dried leaves in hot (not boiling) water for 5–7 minutes, optionally with a slice of ginger. Sip slowly before checking your phone. This small pause signals the nervous system to settle while antioxidants and aromatic oils begin their work. For deeper support through cold seasons, rotate Tulsi with turmeric-ginger infusions and keep the habit daily. Ritual is medicine — the herb works best when the mind arrives with it.",
-                "image": "/media/blogs/tulsi_morning_ritual.jpg"
+                "image_file": "tulsi_morning_ritual.jpg"
             }
         ]
 
         for b_info in blogs_data:
+            # Upload blog image to Cloudinary
+            image_file = SEED_ASSETS / 'blogs' / b_info['image_file']
+            public_id = self._upload_to_cloudinary(
+                image_file,
+                folder='blogs',
+                public_id=b_info['image_file'].replace('.jpg', '')
+            )
+            
             post, created = BlogPost.objects.get_or_create(
                 title=b_info['title'],
                 defaults={
@@ -261,68 +306,55 @@ class Command(BaseCommand):
                     'content': b_info['content'],
                     'author_name': 'Dr. Rohan Sharma, AyurVeda Expert',
                     'is_published': True,
-                    'image': b_info['image']
+                    'image': public_id if public_id else ''
                 }
             )
-            if not created:
-                post.image = b_info['image']
+            if not created and public_id:
+                post.image = public_id
                 post.excerpt = b_info['excerpt']
                 post.content = b_info['content']
                 post.is_published = True
                 post.save()
             self.stdout.write(self.style.SUCCESS(f"{'Created' if created else 'Updated'} blog: {b_info['title']}"))
 
-        # 7. Seed Testimonials
+        # 7. Seed Testimonials (now use user profile images instead of testimonial images)
+        # Note: Only one testimonial per user due to unique constraint
         testimonials_data = [
             {
-                "name": "Meera Iyer",
-                "role": "Ayurveda Practitioner",
+                "user": seeded_customers[0],
                 "content": "HerbalUdyog's Ashwagandha root powder is the most authentic I have ever used. Highly recommend their organic extracts!",
                 "rating": 5,
                 "is_approved": True,
-                "image": "/media/testimonials/meera_iyer.jpg",
             },
             {
-                "name": "David Miller",
-                "role": "Daily Wellness Enthusiast",
+                "user": seeded_customers[1],
                 "content": "The Triphala digestive support capsules completely resolved my bloating issue. Pure quality ingredients.",
                 "rating": 5,
                 "is_approved": True,
-                "image": "/media/testimonials/david_miller.jpg",
             },
             {
-                "name": "Sonia Gupta",
-                "role": "Organic Lifestyle Blogger",
+                "user": seeded_customers[2],
                 "content": "I love their commitment to clean packaging and sustainable sourcing directly from local farmers.",
                 "rating": 4,
                 "is_approved": True,
-                "image": "/media/testimonials/sonia_gupta.jpg",
-            },
-            {
-                "name": "Rajesh Nair",
-                "role": "Software Engineer",
-                "content": "Decent products, but shipment took two extra days. The turmeric capsules are excellent though.",
-                "rating": 4,
-                "is_approved": False,
-                "image": "/media/testimonials/rajesh_nair.jpg",
             },
         ]
 
         for t_info in testimonials_data:
             testimonial, created = Testimonial.objects.get_or_create(
-                name=t_info['name'],
-                content=t_info['content'],
+                user=t_info['user'],
                 defaults={
-                    'role': t_info['role'],
+                    'content': t_info['content'],
                     'rating': t_info['rating'],
                     'is_approved': t_info['is_approved'],
-                    'image': t_info['image'],
                 }
             )
-            if not created and not testimonial.image:
-                testimonial.image = t_info['image']
+            if not created:
+                testimonial.content = t_info['content']
+                testimonial.rating = t_info['rating']
+                testimonial.is_approved = t_info['is_approved']
                 testimonial.save()
-            self.stdout.write(self.style.SUCCESS(f"{'Created' if created else 'Updated'} testimonial: {t_info['name']}"))
+            self.stdout.write(self.style.SUCCESS(f"{'Created' if created else 'Updated'} testimonial for user: {t_info['user'].email}"))
 
         # 8. Seed Contact Inquiries
         inquiries_data = [

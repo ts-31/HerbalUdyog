@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
@@ -62,9 +63,34 @@ class LogoutView(views.APIView):
 class UserProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_object(self):
         return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        profile_fields = ('phone_number', 'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country', 'profile_image')
+
+        # Split data: user fields vs profile fields
+        user_data = {k: v for k, v in request.data.items() if k not in profile_fields}
+        profile_data = {k: v for k, v in request.data.items() if k in profile_fields}
+
+        # Update user model fields (first_name, last_name)
+        if user_data:
+            serializer = self.get_serializer(user, data=user_data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+        # Update profile fields
+        if profile_data:
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            profile_serializer = UserProfileSerializer(profile, data=profile_data, partial=True, context={'request': request})
+            profile_serializer.is_valid(raise_exception=True)
+            profile_serializer.save()
+
+        # Return fresh user data
+        return Response(self.get_serializer(user).data)
 
 
 class WishlistViewSet(viewsets.ModelViewSet):

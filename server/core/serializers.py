@@ -44,18 +44,42 @@ class ContactInquirySerializer(serializers.ModelSerializer):
 
 
 class TestimonialSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
+    user_email = serializers.SerializerMethodField()
+    user_profile_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Testimonial
-        fields = ('id', 'name', 'role', 'content', 'image', 'image_url', 'rating', 'is_approved', 'created_at')
+        fields = ('id', 'user', 'user_email', 'user_profile_image_url', 'name', 'content', 'rating', 'is_approved', 'created_at')
         extra_kwargs = {
-            'image': {'write_only': True}
+            'user': {'read_only': True}
         }
 
-    def get_image_url(self, obj):
-        return resolve_image_url(
-            obj.image,
-            self.context.get('request'),
-            cloudinary_kwargs={'width': 150, 'crop': 'fill', 'gravity': 'face'},
-        )
+    def get_user_email(self, obj):
+        return obj.user.email if obj.user else None
+
+    def get_user_profile_image_url(self, obj):
+        if hasattr(obj.user, 'profile') and obj.user.profile.profile_image:
+            img_str = str(obj.user.profile.profile_image)
+            if img_str.startswith('http'):
+                return img_str
+            if img_str.startswith('/'):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(img_str)
+                return f"http://127.0.0.1:8000{img_str}"
+            from cloudinary.utils import cloudinary_url
+            url, _ = cloudinary_url(img_str, secure=True, width=150, crop='fill', gravity='face')
+            return url
+        return None
+
+    def validate_content(self, value):
+        if len(value) < 50:
+            raise serializers.ValidationError("Testimonial must be at least 50 characters.")
+        if len(value) > 500:
+            raise serializers.ValidationError("Testimonial must not exceed 500 characters.")
+        return value
+
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5.")
+        return value

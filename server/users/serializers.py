@@ -52,9 +52,44 @@ class WishlistSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    profile_image_url = serializers.SerializerMethodField()
+    profile_image = serializers.ImageField(write_only=True, required=False, allow_null=True)
+
     class Meta:
         model = UserProfile
-        fields = ('phone_number', 'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country')
+        fields = ('phone_number', 'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country', 'profile_image', 'profile_image_url')
+
+    def get_profile_image_url(self, obj):
+        if obj.profile_image:
+            img_str = str(obj.profile_image)
+            # If it's already a full URL, return it
+            if img_str.startswith('http'):
+                return img_str
+            # If it's a local path, build absolute URL
+            if img_str.startswith('/'):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(img_str)
+                return f"http://127.0.0.1:8000{img_str}"
+            # Otherwise, it's a Cloudinary public_id - convert to URL
+            from cloudinary.utils import cloudinary_url
+            url, _ = cloudinary_url(img_str, secure=True)
+            return url
+        return None
+
+    def update(self, instance, validated_data):
+        profile_image = validated_data.pop('profile_image', None)
+        
+        # Handle image upload - Django's ImageField with Cloudinary storage will handle upload
+        if profile_image:
+            instance.profile_image = profile_image
+        
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -66,14 +101,33 @@ class UserSerializer(serializers.ModelSerializer):
     state = serializers.CharField(source='profile.state', read_only=True, default='')
     postal_code = serializers.CharField(source='profile.postal_code', read_only=True, default='')
     country = serializers.CharField(source='profile.country', read_only=True, default='India')
+    profile_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = (
             'id', 'email', 'role', 'first_name', 'last_name',
-            'phone_number', 'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country',
+            'phone_number', 'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country', 'profile_image_url',
         )
         read_only_fields = ('id', 'email', 'role')
+
+    def get_profile_image_url(self, obj):
+        if hasattr(obj, 'profile') and obj.profile.profile_image:
+            img_str = str(obj.profile.profile_image)
+            # If it's already a full URL, return it
+            if img_str.startswith('http'):
+                return img_str
+            # If it's a local path, build absolute URL
+            if img_str.startswith('/'):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(img_str)
+                return f"http://127.0.0.1:8000{img_str}"
+            # Otherwise, it's a Cloudinary public_id - convert to URL
+            from cloudinary.utils import cloudinary_url
+            url, _ = cloudinary_url(img_str, secure=True)
+            return url
+        return None
 
 
 class RegisterSerializer(serializers.ModelSerializer):

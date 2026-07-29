@@ -60,7 +60,7 @@ export const ProductDetail = () => {
     );
   }
 
-  const primaryImage = selectedImage || "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&q=80&w=1000";
+  const primaryImage = selectedImage;
   const allImages = product.images || [];
 
   const relatedProducts = relatedData?.results.filter(p => p.id !== product.id).slice(0, 4) || [];
@@ -350,7 +350,7 @@ export const ProductDetail = () => {
                 >
                   <Link to={`/product/${prod.slug}`} className="group relative flex flex-col h-full">
                     <div className="relative aspect-square rounded-2xl overflow-hidden mb-5 bg-[#F5F5F7]">
-                      <img src={prod.primary_image || "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80&w=600"} alt={prod.name} className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700" />
+                      <img src={prod.primary_image} alt={prod.name} className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-700" />
                     </div>
                     
                     <div className="flex flex-col flex-1">

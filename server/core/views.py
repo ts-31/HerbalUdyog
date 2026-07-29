@@ -1,7 +1,14 @@
 from rest_framework import viewsets, permissions, mixins
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.pagination import PageNumberPagination
 from .models import BlogPost, ContactInquiry, Testimonial
 from .serializers import BlogPostSerializer, ContactInquirySerializer, TestimonialSerializer
+
+
+class TestimonialPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -36,6 +43,7 @@ class TestimonialViewSet(viewsets.ModelViewSet):
     serializer_class = TestimonialSerializer
     permission_classes = [IsAdminOrReadOnly]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    pagination_class = TestimonialPagination
 
     def get_permissions(self):
         if self.action == 'create':
@@ -47,3 +55,11 @@ class TestimonialViewSet(viewsets.ModelViewSet):
         if user.is_authenticated and user.role == 'admin':
             return Testimonial.objects.all()
         return Testimonial.objects.filter(is_approved=True)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        # Check if user already has a testimonial
+        if Testimonial.objects.filter(user=user).exists():
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("You have already submitted a testimonial.")
+        serializer.save(user=user)

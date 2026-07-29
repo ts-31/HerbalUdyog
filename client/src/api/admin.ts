@@ -169,10 +169,10 @@ export const adminContactApi = {
 // ─── Testimonials (Admin) ────────────────────────────────────────────────────
 
 export const adminTestimonialsApi = {
-  list: async () => {
-    const res = await apiClient.get('/api/core/testimonials/');
+  list: async (page: number = 1) => {
+    const res = await apiClient.get(`/api/core/testimonials/?page=${page}`);
     if (!res.ok) throw new Error('Failed to fetch testimonials');
-    return res.json() as Promise<import('./core').Testimonial[]>;
+    return res.json() as Promise<{ count: number; next: string | null; previous: string | null; results: import('./core').Testimonial[] }>;
   },
 
   approve: async (id: number, is_approved: boolean) => {

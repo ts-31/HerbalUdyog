@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from django.conf import settings
 
 class BlogPost(models.Model):
     title = models.CharField(max_length=255)
@@ -38,16 +39,16 @@ class ContactInquiry(models.Model):
         return f"{self.subject} by {self.name}"
 
 class Testimonial(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='testimonials')
     name = models.CharField(max_length=255)
-    role = models.CharField(max_length=255, blank=True, null=True)
     content = models.TextField()
-    image = models.CharField(max_length=500, blank=True, null=True)
     rating = models.PositiveIntegerField(default=5)
     is_approved = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
+        unique_together = ('user',)
 
     def __str__(self):
-        return f"Testimonial by {self.name}"
+        return f"Testimonial by {self.user.email}"
