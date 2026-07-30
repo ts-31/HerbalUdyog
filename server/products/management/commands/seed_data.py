@@ -91,7 +91,7 @@ class Command(BaseCommand):
             return None
 
     def _copy_seed_assets(self):
-        for folder in ('products', 'blogs', 'testimonials'):
+        for folder in ('products', 'blogs', 'testimonials', 'profiles'):
             src = SEED_ASSETS / folder
             dest = settings.MEDIA_ROOT / folder
             if not src.exists():
@@ -101,6 +101,16 @@ class Command(BaseCommand):
             for filename in os.listdir(src):
                 shutil.copy2(src / filename, dest / filename)
             self.stdout.write(self.style.SUCCESS(f'Copied seed assets: {folder}/'))
+
+    def _city_meta(self, city):
+        mapping = {
+            'Delhi': ('Delhi', '110001'),
+            'Mumbai': ('Maharashtra', '400001'),
+            'Bangalore': ('Karnataka', '560001'),
+            'Pune': ('Maharashtra', '411001'),
+            'Hyderabad': ('Telangana', '500001'),
+        }
+        return mapping.get(city, ('India', '000000'))
 
     def handle(self, *args, **options):
         self.stdout.write('Seeding data...')
@@ -125,11 +135,13 @@ class Command(BaseCommand):
             admin.save()
             self.stdout.write(self.style.SUCCESS(f'Admin user verified: {admin_email}'))
 
-        # 2. Create customer users
+        # 2. Create customer users with Cloudinary profile images
         customers_data = [
-            {"email": "alice@example.com", "first_name": "Alice", "last_name": "Smith", "phone": "9876543211", "city": "Delhi"},
-            {"email": "bob@example.com", "first_name": "Bob", "last_name": "Johnson", "phone": "9876543212", "city": "Mumbai"},
-            {"email": "charlie@example.com", "first_name": "Charlie", "last_name": "Davis", "phone": "9876543213", "city": "Bangalore"}
+            {"email": "alice@example.com", "first_name": "Alice", "last_name": "Smith", "phone": "9876543211", "city": "Delhi", "profile_image": "alice_smith.jpg"},
+            {"email": "bob@example.com", "first_name": "Bob", "last_name": "Johnson", "phone": "9876543212", "city": "Mumbai", "profile_image": "bob_johnson.jpg"},
+            {"email": "charlie@example.com", "first_name": "Charlie", "last_name": "Davis", "phone": "9876543213", "city": "Bangalore", "profile_image": "charlie_davis.jpg"},
+            {"email": "diana@example.com", "first_name": "Diana", "last_name": "Patel", "phone": "9876543214", "city": "Pune", "profile_image": "diana_patel.jpg"},
+            {"email": "evan@example.com", "first_name": "Evan", "last_name": "Mehta", "phone": "9876543215", "city": "Hyderabad", "profile_image": "evan_mehta.jfif"},
         ]
 
         seeded_customers = []
@@ -143,20 +155,42 @@ class Command(BaseCommand):
                     'is_active': True
                 }
             )
-            if created:
-                c_user.set_password('Customer@123')
-                c_user.save()
-                self.stdout.write(self.style.SUCCESS(f"Created customer user: {c_info['email']}"))
+            c_user.first_name = c_info['first_name']
+            c_user.last_name = c_info['last_name']
+            c_user.role = 'customer'
+            c_user.is_active = True
+            c_user.set_password('!12345678')
+            c_user.save()
+            self.stdout.write(self.style.SUCCESS(
+                f"{'Created' if created else 'Updated'} customer: {c_info['email']} (password set)"
+            ))
 
+            state, postal = self._city_meta(c_info['city'])
             profile, _ = UserProfile.objects.get_or_create(user=c_user)
             profile.phone_number = c_info['phone']
             profile.address_line1 = f"123 Street, {c_info['city']}"
             profile.city = c_info['city']
-            profile.state = "Karnataka" if c_info['city'] == "Bangalore" else "Maharashtra" if c_info['city'] == "Mumbai" else "Delhi"
-            profile.postal_code = "560001" if c_info['city'] == "Bangalore" else "400001" if c_info['city'] == "Mumbai" else "110001"
+            profile.state = state
+            profile.postal_code = postal
             profile.country = "India"
-            profile.save()
 
+            img_path = SEED_ASSETS / 'profiles' / c_info['profile_image']
+            if img_path.exists():
+                slug = c_info['email'].split('@')[0]
+                public_id = self._upload_to_cloudinary(
+                    str(img_path),
+                    folder='profile_images',
+                    public_id=f'user_{slug}',
+                )
+                if public_id:
+                    profile.profile_image = public_id
+                    self.stdout.write(self.style.SUCCESS(f'  -> Profile image uploaded: {public_id}'))
+                else:
+                    self.stdout.write(self.style.WARNING(f'  -> Profile image upload failed for {c_info["email"]}'))
+            else:
+                self.stdout.write(self.style.WARNING(f'  -> Profile image missing: {img_path}'))
+
+            profile.save()
             seeded_customers.append(c_user)
 
         # 3. Create Categories
@@ -317,44 +351,49 @@ class Command(BaseCommand):
                 post.save()
             self.stdout.write(self.style.SUCCESS(f"{'Created' if created else 'Updated'} blog: {b_info['title']}"))
 
-        # 7. Seed Testimonials (now use user profile images instead of testimonial images)
-        # Note: Only one testimonial per user due to unique constraint
+        # 7. Clear and reseed testimonials (one approved per seeded customer)
+        Testimonial.objects.all().delete()
+        self.stdout.write(self.style.WARNING('Deleted all existing testimonials'))
+
         testimonials_data = [
             {
                 "user": seeded_customers[0],
-                "content": "HerbalUdyog's Ashwagandha root powder is the most authentic I have ever used. Highly recommend their organic extracts!",
+                "content": "HerbalUdyog's Ashwagandha root powder is the most authentic I have ever used. Highly recommend their organic extracts for daily wellness!",
                 "rating": 5,
-                "is_approved": True,
             },
             {
                 "user": seeded_customers[1],
-                "content": "The Triphala digestive support capsules completely resolved my bloating issue. Pure quality ingredients.",
+                "content": "The Triphala digestive support capsules completely resolved my bloating issue. Pure quality ingredients and honest sourcing.",
                 "rating": 5,
-                "is_approved": True,
             },
             {
                 "user": seeded_customers[2],
-                "content": "I love their commitment to clean packaging and sustainable sourcing directly from local farmers.",
+                "content": "I love their commitment to clean packaging and sustainable sourcing directly from local farmers. Truly thoughtful brand.",
                 "rating": 4,
-                "is_approved": True,
+            },
+            {
+                "user": seeded_customers[3],
+                "content": "Their Neem and Tulsi face wash calmed my skin within two weeks. Gentle, effective, and free from harsh chemicals.",
+                "rating": 5,
+            },
+            {
+                "user": seeded_customers[4],
+                "content": "Tulsi green tea and Amla drops are now part of my morning routine. Noticeable energy and immunity support every day.",
+                "rating": 5,
             },
         ]
 
         for t_info in testimonials_data:
-            testimonial, created = Testimonial.objects.get_or_create(
-                user=t_info['user'],
-                defaults={
-                    'content': t_info['content'],
-                    'rating': t_info['rating'],
-                    'is_approved': t_info['is_approved'],
-                }
+            user = t_info['user']
+            full_name = f"{user.first_name} {user.last_name}".strip() or user.email
+            Testimonial.objects.create(
+                user=user,
+                name=full_name,
+                content=t_info['content'],
+                rating=t_info['rating'],
+                is_approved=True,
             )
-            if not created:
-                testimonial.content = t_info['content']
-                testimonial.rating = t_info['rating']
-                testimonial.is_approved = t_info['is_approved']
-                testimonial.save()
-            self.stdout.write(self.style.SUCCESS(f"{'Created' if created else 'Updated'} testimonial for user: {t_info['user'].email}"))
+            self.stdout.write(self.style.SUCCESS(f"Created testimonial for user: {user.email}"))
 
         # 8. Seed Contact Inquiries
         inquiries_data = [
