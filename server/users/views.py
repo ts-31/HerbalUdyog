@@ -15,9 +15,10 @@ from .serializers import (
     AdminTokenObtainPairSerializer,
     CustomerTokenObtainPairSerializer,
     UserProfileSerializer,
-    WishlistSerializer
+    WishlistSerializer,
+    AddressSerializer,
 )
-from .models import UserProfile, Wishlist
+from .models import UserProfile, Wishlist, Address
 
 User = get_user_model()
 
@@ -102,36 +103,18 @@ class WishlistViewSet(viewsets.ModelViewSet):
         return Wishlist.objects.filter(user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
-        # Allow deletion by product_id
         product_id = self.kwargs.get('product_id')
         wishlist_item = get_object_or_404(Wishlist, user=request.user, product_id=product_id)
         wishlist_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-    def update(self, request, *args, **kwargs):
-        user = self.get_object()
-        profile_fields = ('phone_number', 'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country')
+class AddressViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AddressSerializer
 
-        # Split data: user fields vs profile fields
-        user_data = {k: v for k, v in request.data.items() if k not in profile_fields}
-        profile_data = {k: v for k, v in request.data.items() if k in profile_fields}
-
-        # Update user model fields (first_name, last_name)
-        if user_data:
-            serializer = self.get_serializer(user, data=user_data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-
-        # Update profile fields
-        if profile_data:
-            profile, _ = UserProfile.objects.get_or_create(user=user)
-            profile_serializer = UserProfileSerializer(profile, data=profile_data, partial=True)
-            profile_serializer.is_valid(raise_exception=True)
-            profile_serializer.save()
-
-        # Return fresh user data
-        return Response(self.get_serializer(user).data)
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
 
 
 class ChangePasswordView(generics.UpdateAPIView):

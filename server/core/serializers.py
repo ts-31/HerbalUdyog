@@ -59,17 +59,11 @@ class TestimonialSerializer(serializers.ModelSerializer):
 
     def get_user_profile_image_url(self, obj):
         if hasattr(obj.user, 'profile') and obj.user.profile.profile_image:
-            img_str = str(obj.user.profile.profile_image)
-            if img_str.startswith('http'):
-                return img_str
-            if img_str.startswith('/'):
-                request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(img_str)
-                return f"http://127.0.0.1:8000{img_str}"
-            from cloudinary.utils import cloudinary_url
-            url, _ = cloudinary_url(img_str, secure=True, width=150, crop='fill', gravity='face')
-            return url
+            return resolve_image_url(
+                obj.user.profile.profile_image,
+                self.context.get('request'),
+                cloudinary_kwargs={'width': 150, 'crop': 'fill', 'gravity': 'face'},
+            )
         return None
 
     def validate_content(self, value):

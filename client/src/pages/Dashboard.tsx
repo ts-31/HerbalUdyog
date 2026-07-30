@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { useWishlist } from '../hooks/useWishlist';
 import { useOrders } from '../hooks/useOrders';
+import { useAddresses } from '../hooks/useAddresses';
+import { Address } from '../api/addresses';
 import { coreApi } from '../api/core';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -266,19 +268,42 @@ export const DashboardLayout = () => {
 
 export const DashboardProfile = () => {
   const { profile, updateProfile } = useProfile();
+  const {
+    addresses,
+    loading: addressesLoading,
+    createAddress,
+    updateAddress,
+    deleteAddress,
+  } = useAddresses();
+
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     first_name: '',
     last_name: '',
     phone_number: '',
-    address_line1: '',
-    city: '',
-    state: '',
-    postal_code: '',
-    profile_image: null as File | null
+    profile_image: null as File | null,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  const emptyAddressForm = {
+    label: '',
+    full_name: '',
+    phone_number: '',
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: 'India',
+    is_default: false,
+  };
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
+  const [addressForm, setAddressForm] = useState(emptyAddressForm);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const [addressSaving, setAddressSaving] = useState(false);
 
   const handleEditClick = () => {
     if (profile) {
@@ -286,11 +311,7 @@ export const DashboardProfile = () => {
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         phone_number: profile.phone_number || '',
-        address_line1: profile.address_line1 || '',
-        city: profile.city || '',
-        state: profile.state || '',
-        postal_code: profile.postal_code || '',
-        profile_image: null
+        profile_image: null,
       });
       setImagePreview(profile.profile_image_url || null);
       setIsEditing(true);
@@ -308,7 +329,7 @@ export const DashboardProfile = () => {
         setError('Only JPG, PNG, and WEBP images are allowed');
         return;
       }
-      setEditForm(prev => ({ ...prev, profile_image: file }));
+      setEditForm((prev) => ({ ...prev, profile_image: file }));
       setImagePreview(URL.createObjectURL(file));
       setError(null);
     }
@@ -318,13 +339,88 @@ export const DashboardProfile = () => {
     e.preventDefault();
     try {
       setError(null);
+      setProfileSaving(true);
       await updateProfile(editForm);
       setIsEditing(false);
     } catch (err) {
       console.error('Failed to update profile', err);
       setError('Failed to update profile. Please try again.');
+    } finally {
+      setProfileSaving(false);
     }
   };
+
+  const openAddAddress = () => {
+    setEditingAddressId(null);
+    setAddressForm({
+      ...emptyAddressForm,
+      full_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(),
+      phone_number: profile?.phone_number || '',
+      is_default: addresses.length === 0,
+    });
+    setAddressError(null);
+    setShowAddressForm(true);
+  };
+
+  const openEditAddress = (addr: Address) => {
+    setEditingAddressId(addr.id);
+    setAddressForm({
+      label: addr.label || '',
+      full_name: addr.full_name,
+      phone_number: addr.phone_number || '',
+      address_line1: addr.address_line1,
+      address_line2: addr.address_line2 || '',
+      city: addr.city,
+      state: addr.state,
+      postal_code: addr.postal_code,
+      country: addr.country || 'India',
+      is_default: addr.is_default,
+    });
+    setAddressError(null);
+    setShowAddressForm(true);
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addressForm.full_name.trim() || !addressForm.address_line1.trim() || !addressForm.city.trim() || !addressForm.state.trim() || !addressForm.postal_code.trim()) {
+      setAddressError('Please fill in all required address fields.');
+      return;
+    }
+    try {
+      setAddressSaving(true);
+      setAddressError(null);
+      if (editingAddressId) {
+        await updateAddress(editingAddressId, addressForm);
+      } else {
+        await createAddress(addressForm);
+      }
+      setShowAddressForm(false);
+      setEditingAddressId(null);
+    } catch (err: any) {
+      setAddressError(err.message || 'Failed to save address.');
+    } finally {
+      setAddressSaving(false);
+    }
+  };
+
+  const handleDeleteAddress = async (id: number) => {
+    if (!confirm('Delete this address?')) return;
+    try {
+      await deleteAddress(id);
+    } catch (err: any) {
+      setAddressError(err.message || 'Failed to delete address.');
+    }
+  };
+
+  const handleSetDefault = async (id: number) => {
+    try {
+      await updateAddress(id, { is_default: true });
+    } catch (err: any) {
+      setAddressError(err.message || 'Failed to set default address.');
+    }
+  };
+
+  const defaultAddress = addresses.find((a) => a.is_default) || addresses[0];
 
   return (
     <motion.div
@@ -344,7 +440,7 @@ export const DashboardProfile = () => {
       {isEditing ? (
         <form onSubmit={handleSaveProfile} className="space-y-6">
           {error && <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-xl text-sm">{error}</div>}
-          
+
           <div className="flex items-center gap-6 mb-6">
             {imagePreview ? (
               <img src={imagePreview} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-outline-variant/30" />
@@ -384,39 +480,13 @@ export const DashboardProfile = () => {
               value={editForm.phone_number}
               onChange={(e) => setEditForm({ ...editForm, phone_number: e.target.value })}
             />
-            <div className="md:col-span-2">
-              <Input
-                label="Address"
-                type="text"
-                value={editForm.address_line1}
-                onChange={(e) => setEditForm({ ...editForm, address_line1: e.target.value })}
-              />
-            </div>
-            <Input
-              label="City"
-              type="text"
-              value={editForm.city}
-              onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-            />
-            <Input
-              label="State"
-              type="text"
-              value={editForm.state}
-              onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
-            />
-            <Input
-              label="Postal Code"
-              type="text"
-              value={editForm.postal_code}
-              onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
-            />
           </div>
           <div className="flex gap-4 pt-6 mt-4 border-t border-outline-variant/30">
-            <Button variant="outline" type="button" onClick={() => setIsEditing(false)}>
+            <Button variant="outline" type="button" onClick={() => setIsEditing(false)} disabled={profileSaving}>
               Cancel
             </Button>
-            <Button type="submit">
-              Save Changes
+            <Button type="submit" isLoading={profileSaving}>
+              {profileSaving ? 'Saving…' : 'Save Changes'}
             </Button>
           </div>
         </form>
@@ -431,28 +501,128 @@ export const DashboardProfile = () => {
               </div>
             )}
             <div>
-              <p className="font-label-md text-xs uppercase tracking-widest text-on-surface-variant mb-2">Email</p>
-              <p className="font-body-lg text-on-surface">{profile?.email}</p>
+              <p className="font-label-md text-xs uppercase tracking-widest text-on-surface-variant mb-2">Name</p>
+              <p className="font-body-lg text-on-surface">
+                {[profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Not set'}
+              </p>
+              <p className="font-body-sm text-on-surface-variant mt-1">{profile?.email}</p>
             </div>
           </div>
           <div>
             <p className="font-label-md text-xs uppercase tracking-widest text-on-surface-variant mb-2">Phone</p>
             <p className="font-body-lg text-on-surface">{profile?.phone_number || 'Not provided'}</p>
           </div>
-          <div className="md:col-span-2 pt-6 border-t border-outline-variant/30">
-            <h3 className="font-headline-sm text-lg text-on-surface mb-4 tracking-tight">Shipping Address</h3>
-            {profile?.address_line1 ? (
-              <div className="text-body-lg text-on-surface leading-relaxed">
-                <p>{profile.address_line1}</p>
-                {profile.address_line2 && <p>{profile.address_line2}</p>}
-                <p>{profile.city}, {profile.state} {profile.postal_code}</p>
-              </div>
-            ) : (
-              <p className="font-body-lg text-on-surface-variant italic">No address provided yet.</p>
-            )}
-          </div>
         </div>
       )}
+
+      {/* Address book */}
+      <div className="mt-12 pt-8 border-t border-outline-variant/30">
+        <div className="flex justify-between items-center mb-6 gap-4">
+          <h3 className="font-headline-sm text-xl text-on-surface tracking-tight">Address Book</h3>
+          {!showAddressForm && (
+            <Button variant="outline" onClick={openAddAddress}>
+              Add Address
+            </Button>
+          )}
+        </div>
+
+        {addressError && (
+          <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-xl text-sm">{addressError}</div>
+        )}
+
+        {showAddressForm && (
+          <form onSubmit={handleSaveAddress} className="mb-8 p-6 rounded-2xl border border-outline-variant/30 bg-surface space-y-4">
+            <h4 className="font-label-lg text-on-surface mb-2">
+              {editingAddressId ? 'Edit Address' : 'New Address'}
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input label="Label (optional)" placeholder="Home, Office…" value={addressForm.label} onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })} />
+              <Input label="Full Name" required value={addressForm.full_name} onChange={(e) => setAddressForm({ ...addressForm, full_name: e.target.value })} />
+              <Input label="Phone" value={addressForm.phone_number} onChange={(e) => setAddressForm({ ...addressForm, phone_number: e.target.value })} />
+              <div className="md:col-span-2">
+                <Input label="Address Line 1" required value={addressForm.address_line1} onChange={(e) => setAddressForm({ ...addressForm, address_line1: e.target.value })} />
+              </div>
+              <div className="md:col-span-2">
+                <Input label="Address Line 2" value={addressForm.address_line2} onChange={(e) => setAddressForm({ ...addressForm, address_line2: e.target.value })} />
+              </div>
+              <Input label="City" required value={addressForm.city} onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })} />
+              <Input label="State" required value={addressForm.state} onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })} />
+              <Input label="Postal Code" required value={addressForm.postal_code} onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })} />
+              <Input label="Country" value={addressForm.country} onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })} />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-on-surface">
+              <input
+                type="checkbox"
+                checked={addressForm.is_default}
+                onChange={(e) => setAddressForm({ ...addressForm, is_default: e.target.checked })}
+                className="rounded border-outline"
+              />
+              Set as default shipping address
+            </label>
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" type="button" onClick={() => { setShowAddressForm(false); setEditingAddressId(null); }}>
+                Cancel
+              </Button>
+              <Button type="submit" isLoading={addressSaving}>
+                {addressSaving ? 'Saving…' : 'Save Address'}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {addressesLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : addresses.length === 0 ? (
+          <p className="font-body-lg text-on-surface-variant italic">No address saved yet. Add one for faster checkout.</p>
+        ) : (
+          <div className="space-y-4">
+            {addresses.map((addr) => (
+              <div
+                key={addr.id}
+                className={`p-5 rounded-2xl border ${addr.is_default ? 'border-primary/40 bg-primary-container/20' : 'border-outline-variant/30 bg-surface'}`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="text-on-surface leading-relaxed">
+                    <div className="flex items-center gap-2 mb-2">
+                      {addr.label && <span className="font-label-md text-sm uppercase tracking-wider text-on-surface-variant">{addr.label}</span>}
+                      {addr.is_default && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary text-on-primary font-label-md">Default</span>
+                      )}
+                    </div>
+                    <p className="font-label-lg">{addr.full_name}</p>
+                    {addr.phone_number && <p className="text-sm text-on-surface-variant">{addr.phone_number}</p>}
+                    <p className="mt-1">{addr.address_line1}</p>
+                    {addr.address_line2 && <p>{addr.address_line2}</p>}
+                    <p>{addr.city}, {addr.state} {addr.postal_code}</p>
+                    <p>{addr.country}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    {!addr.is_default && (
+                      <Button variant="outline" type="button" onClick={() => handleSetDefault(addr.id)}>
+                        Set Default
+                      </Button>
+                    )}
+                    <Button variant="outline" type="button" onClick={() => openEditAddress(addr)}>
+                      Edit
+                    </Button>
+                    <Button variant="outline" type="button" onClick={() => handleDeleteAddress(addr.id)}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!showAddressForm && defaultAddress && (
+          <p className="mt-4 text-sm text-on-surface-variant">
+            Default address is used at checkout unless you choose another.
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 };

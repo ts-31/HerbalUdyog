@@ -2,9 +2,26 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import UserProfile, Wishlist
+from core.serializers import resolve_image_url
+from .models import UserProfile, Wishlist, Address
 
 User = get_user_model()
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = (
+            'id', 'label', 'full_name', 'phone_number',
+            'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country',
+            'is_default', 'created_at', 'updated_at',
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
 
 
 class WishlistSerializer(serializers.ModelSerializer):
@@ -25,17 +42,7 @@ class WishlistSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         primary = obj.product.images.filter(is_primary=True).first() or obj.product.images.first()
         if primary and primary.image:
-            img_str = str(primary.image)
-            if img_str.startswith('http'):
-                return img_str
-            if img_str.startswith('/'):
-                request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(img_str)
-                return f"http://127.0.0.1:8000{img_str}"
-            from cloudinary.utils import cloudinary_url
-            url, _ = cloudinary_url(img_str, secure=True)
-            return url
+            return resolve_image_url(primary.image, self.context.get('request'))
         return None
 
     def create(self, validated_data):
@@ -60,34 +67,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('phone_number', 'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country', 'profile_image', 'profile_image_url')
 
     def get_profile_image_url(self, obj):
-        if obj.profile_image:
-            img_str = str(obj.profile_image)
-            # If it's already a full URL, return it
-            if img_str.startswith('http'):
-                return img_str
-            # If it's a local path, build absolute URL
-            if img_str.startswith('/'):
-                request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(img_str)
-                return f"http://127.0.0.1:8000{img_str}"
-            # Otherwise, it's a Cloudinary public_id - convert to URL
-            from cloudinary.utils import cloudinary_url
-            url, _ = cloudinary_url(img_str, secure=True)
-            return url
-        return None
+        return resolve_image_url(obj.profile_image, self.context.get('request'))
 
     def update(self, instance, validated_data):
         profile_image = validated_data.pop('profile_image', None)
-        
-        # Handle image upload - Django's ImageField with Cloudinary storage will handle upload
+
+        # CloudinaryField uploads the file to Cloudinary on save
         if profile_image:
             instance.profile_image = profile_image
-        
-        # Update other fields
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        
+
         instance.save()
         return instance
 
@@ -113,20 +104,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_profile_image_url(self, obj):
         if hasattr(obj, 'profile') and obj.profile.profile_image:
-            img_str = str(obj.profile.profile_image)
-            # If it's already a full URL, return it
-            if img_str.startswith('http'):
-                return img_str
-            # If it's a local path, build absolute URL
-            if img_str.startswith('/'):
-                request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(img_str)
-                return f"http://127.0.0.1:8000{img_str}"
-            # Otherwise, it's a Cloudinary public_id - convert to URL
-            from cloudinary.utils import cloudinary_url
-            url, _ = cloudinary_url(img_str, secure=True)
-            return url
+            return resolve_image_url(obj.profile.profile_image, self.context.get('request'))
         return None
 
 

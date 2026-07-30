@@ -1,9 +1,9 @@
 import { apiClient } from './client';
-import { Product } from './products';
+import { AddressInput } from './addresses';
 
 export interface OrderItem {
   id: number;
-  product: number; // Product ID
+  product: number;
   product_name: string;
   product_image?: string;
   quantity: number;
@@ -26,15 +26,16 @@ export interface Order {
   updated_at: string;
 }
 
-export interface CreateOrderPayload {
-  shipping_address: string;
-  billing_address?: string;
+export type CreateOrderPayload = {
   items: {
     product_id: number;
     quantity: number;
     size?: string;
   }[];
-}
+  address_id?: number;
+  shipping_address?: Partial<AddressInput>;
+  save_address?: boolean;
+};
 
 export const ordersApi = {
   list: async () => {
@@ -53,7 +54,11 @@ export const ordersApi = {
     const res = await apiClient.post('/api/orders/', data);
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'Failed to place order');
+      const detail =
+        errorData.detail ||
+        (typeof errorData === 'object' ? Object.values(errorData).flat().join(' ') : null) ||
+        'Failed to place order';
+      throw new Error(detail);
     }
     return res.json() as Promise<Order>;
   },

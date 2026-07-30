@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db import transaction
@@ -25,25 +25,32 @@ class OrderViewSet(viewsets.ModelViewSet):
         if request.user.role != 'customer':
             return Response({"detail": "Only customers can place orders."}, status=status.HTTP_403_FORBIDDEN)
             
-        serializer = CreateOrderSerializer(data=request.data)
+        serializer = CreateOrderSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         
         data = serializer.validated_data
-        items_data = data.pop('items')
+        items_data = data['items']
         
         if not items_data:
             return Response({"detail": "Order must contain at least one item."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            snapshot, _ = serializer.resolve_address_snapshot(request.user)
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             
         subtotal = Decimal('0.00')
         order_items_to_create = []
         
         try:
             with transaction.atomic():
-                # 1. Create the Order shell
+                # 1. Create the Order shell with address snapshot
                 order = Order.objects.create(
                     user=request.user,
-                    shipping_address=data['shipping_address'],
-                    billing_address=data.get('billing_address', ''),
+                    shipping_address=snapshot,
+                    billing_address=snapshot,
                     subtotal=0,
                     shipping_cost=0,
                     tax=0,

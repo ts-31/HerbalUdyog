@@ -12,12 +12,14 @@ from .views import (
     UserProfileView,
     ChangePasswordView,
     WishlistViewSet,
+    AddressViewSet,
     AdminStatsView,
     AdminCustomersView,
 )
 
 router = DefaultRouter()
 router.register(r'wishlist', WishlistViewSet, basename='wishlist')
+router.register(r'addresses', AddressViewSet, basename='addresses')
 
 urlpatterns = [
     path('', include(router.urls)),
