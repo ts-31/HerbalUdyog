@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { productsApi, Product } from '../api/products';
 
 export const useProduct = (slug: string | undefined) => {
@@ -6,9 +6,22 @@ export const useProduct = (slug: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const refetch = useCallback(async () => {
+    if (!slug) return null;
+    try {
+      const data = await productsApi.getProduct(slug);
+      setProduct(data);
+      setError(null);
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error occurred'));
+      return null;
+    }
+  }, [slug]);
+
   useEffect(() => {
     if (!slug) return;
-    
+
     const fetchProduct = async () => {
       setLoading(true);
       setError(null);
@@ -25,5 +38,5 @@ export const useProduct = (slug: string | undefined) => {
     fetchProduct();
   }, [slug]);
 
-  return { product, loading, error };
+  return { product, loading, error, refetch };
 };

@@ -44,6 +44,8 @@ export interface Product {
   images: ProductImage[];
   primary_image?: string;
   reviews?: Review[];
+  user_has_reviewed?: boolean;
+  user_can_review?: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -86,7 +88,12 @@ export const productsApi = {
     const res = await apiClient.post(`/api/products/${slug}/add_review/`, payload);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.detail || 'Failed to submit review');
+      const detail =
+        data.detail ||
+        data.comment?.[0] ||
+        data.rating?.[0] ||
+        'Failed to submit review';
+      throw new Error(detail);
     }
     return res.json() as Promise<Review>;
   }

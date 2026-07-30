@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, Package, MapPin, Clock } from 'lucide-react';
 import { ordersApi, Order } from '../api/orders';
+import { useAuth } from '../context/AuthContext';
+import { productsApi } from '../api/products';
 
 const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered'];
 
@@ -20,6 +22,9 @@ export const OrderDetail = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, isCustomer } = useAuth();
+  const [reviewFlagsLoading, setReviewFlagsLoading] = useState(false);
+  const [userHasReviewedBySlug, setUserHasReviewedBySlug] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -36,6 +41,39 @@ export const OrderDetail = () => {
     fetchOrder();
     window.scrollTo(0, 0);
   }, [id]);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!order) return;
+      if (!isAuthenticated || !isCustomer) return;
+      if (order.status !== 'delivered') {
+        setUserHasReviewedBySlug({});
+        return;
+      }
+
+      const slugs = Array.from(
+        new Set(order.items.map((i) => i.product_slug).filter(Boolean) as string[])
+      );
+      if (slugs.length === 0) return;
+
+      try {
+        setReviewFlagsLoading(true);
+        const products = await Promise.all(
+          slugs.map(async (slug) => {
+            const p = await productsApi.getProduct(slug);
+            return { slug, user_has_reviewed: !!p.user_has_reviewed };
+          })
+        );
+        setUserHasReviewedBySlug(Object.fromEntries(products.map((x) => [x.slug, x.user_has_reviewed])));
+      } catch {
+        setUserHasReviewedBySlug({});
+      } finally {
+        setReviewFlagsLoading(false);
+      }
+    };
+
+    void run();
+  }, [order?.id, order?.status, isAuthenticated, isCustomer]);
 
   if (loading) {
     return (
@@ -134,7 +172,29 @@ export const OrderDetail = () => {
                       Qty: {item.quantity}{item.size ? ` • Size: ${item.size}` : ''}
                     </p>
                   </div>
-                  <p className="font-label-md text-on-surface shrink-0">₹{item.price}</p>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <p className="font-label-md text-on-surface">₹{item.price}</p>
+
+                    {order.status === 'delivered' &&
+                      isAuthenticated &&
+                      isCustomer &&
+                      item.product_slug && (
+                        <Link
+                          to={`/product/${item.product_slug}?tab=Reviews`}
+                          className={`px-4 py-2 rounded-xl border text-sm font-label-md transition-colors ${
+                            userHasReviewedBySlug[item.product_slug]
+                              ? 'bg-surface-container text-on-surface-variant/70 border-outline-variant/30 pointer-events-none'
+                              : 'bg-primary text-on-primary hover:bg-primary/90 border-primary/20'
+                          }`}
+                        >
+                          {reviewFlagsLoading
+                            ? '...'
+                            : userHasReviewedBySlug[item.product_slug]
+                              ? 'Reviewed'
+                              : 'Write Review'}
+                        </Link>
+                      )}
+                  </div>
                 </div>
               ))}
             </div>

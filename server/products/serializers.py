@@ -2,6 +2,7 @@ from rest_framework import serializers
 from cloudinary.utils import cloudinary_url
 from .models import Category, Product, ProductImage, Review
 
+
 class ReviewSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
 
@@ -14,6 +15,17 @@ class ReviewSerializer(serializers.ModelSerializer):
         if obj.user.first_name:
             return f"{obj.user.first_name} {obj.user.last_name}".strip()
         return obj.user.email.split('@')[0]
+
+    def validate_comment(self, value):
+        text = (value or '').strip()
+        if len(text) < 10:
+            raise serializers.ValidationError('Review comment must be at least 10 characters.')
+        return text
+
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError('Rating must be between 1 and 5.')
+        return value
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -126,6 +138,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         child=serializers.ImageField(), write_only=True, required=False
     )
     effective_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    user_has_reviewed = serializers.SerializerMethodField()
+    user_can_review = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -133,9 +147,35 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'description', 'price', 'discount_price', 'effective_price',
             'stock_quantity', 'sku', 'is_active', 'is_featured', 'rating',
             'review_count', 'tags', 'category', 'category_id',
-            'images', 'uploaded_images', 'reviews', 'created_at', 'updated_at',
+            'images', 'uploaded_images', 'reviews', 'user_has_reviewed', 'user_can_review',
+            'created_at', 'updated_at',
         )
         read_only_fields = ('slug', 'sku', 'rating', 'review_count', 'created_at', 'updated_at')
+
+    def get_user_has_reviewed(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        if getattr(request.user, 'role', None) != 'customer':
+            return False
+        # Use prefetched reviews when available
+        reviews = getattr(obj, '_prefetched_objects_cache', {}).get('reviews')
+        if reviews is not None:
+            return any(r.user_id == request.user.id for r in reviews)
+        return obj.reviews.filter(user=request.user).exists()
+
+    def get_user_can_review(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        if getattr(request.user, 'role', None) != 'customer':
+            return False
+        from orders.models import OrderItem
+        return OrderItem.objects.filter(
+            order__user=request.user,
+            order__status='delivered',
+            product=obj,
+        ).exists()
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])

@@ -4,6 +4,7 @@ import { AddressInput } from './addresses';
 export interface OrderItem {
   id: number;
   product: number;
+  product_slug?: string | null;
   product_name: string;
   product_image?: string;
   quantity: number;

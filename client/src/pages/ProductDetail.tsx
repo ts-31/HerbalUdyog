@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Star, ShoppingBag, Heart, Search, ShoppingCart } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useProduct } from '../hooks/useProduct';
@@ -14,13 +14,22 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export const ProductDetail = () => {
   const { slug } = useParams();
+  const location = useLocation();
   const { isAdmin, isAuthenticated, isCustomer } = useAuth();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState('100g');
   const [activeTab, setActiveTab] = useState('Description');
+
+  // Allow deep-linking to a specific tab (used from Order Detail to jump to Reviews).
+  useEffect(() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    if (tab && ['Description', 'Benefits', 'Ingredients', 'Reviews'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
   
-  const { product, loading, error } = useProduct(slug);
+  const { product, loading, error, refetch } = useProduct(slug);
   
   // Track selected image
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -305,8 +314,31 @@ export const ProductDetail = () => {
 
                   {isAuthenticated && isCustomer && (
                     <div className="bg-surface-container-low border border-outline-variant/30 rounded-[2rem] p-10">
-                      <h3 className="font-headline-sm text-2xl mb-8 tracking-tight">Write a Review</h3>
-                      <ReviewForm slug={product.slug} onSuccess={() => window.location.reload()} />
+                      {product.user_has_reviewed ? (
+                        <div className="text-center">
+                          <h3 className="font-headline-sm text-2xl mb-3 tracking-tight">Thanks for your review</h3>
+                          <p className="font-body-lg text-on-surface-variant">
+                            You’ve already reviewed this product. Only one review is allowed per product.
+                          </p>
+                        </div>
+                      ) : !product.user_can_review ? (
+                        <div className="text-center">
+                          <h3 className="font-headline-sm text-2xl mb-3 tracking-tight">Review available after delivery</h3>
+                          <p className="font-body-lg text-on-surface-variant">
+                            You can review this product only after at least one order containing it has been delivered.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="font-headline-sm text-2xl mb-8 tracking-tight">Write a Review</h3>
+                          <ReviewForm
+                            slug={product.slug}
+                            onSuccess={async () => {
+                              await refetch();
+                            }}
+                          />
+                        </>
+                      )}
                     </div>
                   )}
                   {!isAuthenticated && (

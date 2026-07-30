@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 interface ReviewFormProps {
   slug: string;
-  onSuccess: () => void;
+  onSuccess: () => void | Promise<void>;
 }
 
 export const ReviewForm: React.FC<ReviewFormProps> = ({ slug, onSuccess }) => {
@@ -29,17 +29,29 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ slug, onSuccess }) => {
       toast.error(msg);
       return;
     }
+    if (comment.trim().length < 10) {
+      const msg = 'Review comment must be at least 10 characters';
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
 
     try {
       setSubmitting(true);
       setError(null);
-      await productsApi.addReview(slug, { rating, comment });
+      await productsApi.addReview(slug, { rating, comment: comment.trim() });
       toast.success('Thank you for submitting your review!');
-      onSuccess();
+      setComment('');
+      setRating(5);
+      await onSuccess();
     } catch (err: any) {
       const errMsg = err.message || 'Failed to submit review';
-      setError(errMsg);
-      toast.error(errMsg);
+      const alreadyReviewed = /already reviewed/i.test(errMsg);
+      const displayMsg = alreadyReviewed
+        ? 'You have already reviewed this product.'
+        : errMsg;
+      setError(displayMsg);
+      toast.error(displayMsg);
     } finally {
       setSubmitting(false);
     }
@@ -52,7 +64,7 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ slug, onSuccess }) => {
           {error}
         </div>
       )}
-      
+
       <div>
         <label className="block font-label-md mb-2">Rating</label>
         <div className="flex gap-1">
@@ -65,18 +77,18 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ slug, onSuccess }) => {
               onClick={() => setRating(star)}
               className="p-1"
             >
-              <Star 
+              <Star
                 className={`w-6 h-6 ${
-                  star <= (hoveredRating || rating) 
-                    ? 'fill-[#154212] text-[#154212]' 
+                  star <= (hoveredRating || rating)
+                    ? 'fill-[#154212] text-[#154212]'
                     : 'text-outline-variant/30'
-                } transition-colors`} 
+                } transition-colors`}
               />
             </button>
           ))}
         </div>
       </div>
-      
+
       <div>
         <label className="block font-label-md mb-2">Review</label>
         <textarea
@@ -86,10 +98,11 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ slug, onSuccess }) => {
           placeholder="Share your experience with this product..."
           className="w-full px-4 py-3 rounded-xl border border-outline-variant/50 bg-surface focus:ring-2 focus:ring-[#154212] outline-none transition-all font-body-md"
         />
+        <p className="mt-1 text-xs text-on-surface-variant">Minimum 10 characters</p>
       </div>
-      
-      <button 
-        type="submit" 
+
+      <button
+        type="submit"
         disabled={submitting}
         className="px-8 py-3 bg-[#154212] text-white rounded-xl font-label-md hover:bg-[#2d5a27] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
       >

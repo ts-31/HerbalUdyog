@@ -6,11 +6,12 @@ from users.models import Address
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_image = serializers.SerializerMethodField()
+    product_slug = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'quantity', 'size', 'price', 'product_image']
-        read_only_fields = ['id', 'product_name', 'price', 'product_image']
+        fields = ['id', 'product', 'product_slug', 'product_name', 'quantity', 'size', 'price', 'product_image']
+        read_only_fields = ['id', 'product_slug', 'product_name', 'price', 'product_image']
 
     def get_product_image(self, obj):
         if obj.product:
@@ -28,6 +29,9 @@ class OrderItemSerializer(serializers.ModelSerializer):
                 url, _ = cloudinary_url(img_str, secure=True)
                 return url
         return None
+
+    def get_product_slug(self, obj):
+        return obj.product.slug if obj.product else None
 
 
 class OrderSerializer(serializers.ModelSerializer):
